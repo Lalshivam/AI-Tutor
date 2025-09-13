@@ -26,29 +26,43 @@ export default function App() {
     speechSynthesis.speak(utterance);
   }
 
+
+  // ...existing code...
   return (
-    <div className="max-w-3xl mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4">AI Math Tutor</h1>
-      <div className="space-y-4">
-        {messages.map((msg, i) =>
-          msg.role === 'ai' ? (
-            <MessageBubble key={i} content={msg.markdown} />
-          ) : (
-            <div key={i} className="text-right">{msg.content}</div>
-          )
-        )}
-      </div>
-      <div className="mt-6 flex gap-2">
-        <input
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          className="flex-1 border p-2 rounded"
-          placeholder="Ask a math question..."
-        />
-        <button onClick={handleSend} className="bg-blue-600 text-white px-4 py-2 rounded">
-          Send
-        </button>
-      </div>
+    <div className="min-h-screen bg-gradient-to-br from-[#343541] to-[#444654] flex flex-col">
+      <header className="w-full py-4 px-6 border-b border-[#343541] bg-[#343541]/80 backdrop-blur-lg">
+        <h1 className="text-2xl md:text-3xl font-bold text-white text-center">AI Math Tutor</h1>
+      </header>
+      <main className="flex-1 flex flex-col items-center justify-center px-2 md:px-0">
+        <div className="w-full max-w-3xl mx-auto flex flex-col h-[70vh] md:h-[60vh] bg-[#212121]/80 rounded-2xl shadow-2xl p-6 md:p-12 overflow-y-auto space-y-6 mt-12 items-center justify-center">
+          {/* Message list */}
+          {messages.map((msg, i) =>
+            msg.role === 'ai' ? (
+              <MessageBubble key={i} content={msg.markdown} />
+            ) : (
+              <div key={i} className="text-right text-white w-full flex justify-end">
+                <div className="bg-[#343541] px-5 py-3 rounded-2xl max-w-[80%]">{msg.content}</div>
+              </div>
+            )
+          )}
+        </div>
+        <form className="w-full max-w-3xl mx-auto flex gap-3 mt-8 items-center justify-center" onSubmit={e => { e.preventDefault(); handleSend(); }}>
+          <input
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            className="flex-1 bg-[#40414f] text-white border-none p-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#19c37d] placeholder:text-[#b4bcd0] text-lg"
+            placeholder="Ask a math question..."
+          />
+          <button
+            type="submit"
+            className="bg-[#19c37d] hover:bg-[#15a06a] text-white px-8 py-4 rounded-xl font-semibold transition shadow text-lg"
+          >
+            Send
+          </button>
+        </form>
+      </main>
+      <footer className="w-full py-3 text-center text-xs text-[#b4bcd0] bg-[#343541]/80 border-t border-[#343541]">AI Tutor MVP &copy; 2025</footer>
     </div>
   );
+  // ...existing code...
 }
