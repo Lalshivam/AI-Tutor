@@ -2,52 +2,71 @@ import { useEffect, useRef } from "react";
 import JXG from "jsxgraph";
 import '../../node_modules/jsxgraph/distrib/jsxgraph.css';
 
-export default function Animate() {
+export default function Animate({ config }) {
   const boxRef = useRef(null);
   const boardRef = useRef(null);
 
   useEffect(() => {
     if (!boxRef.current) return;
 
-    // Clean up old board
     if (boardRef.current) {
       JXG.JSXGraph.freeBoard(boardRef.current);
     }
 
-    // Init new board
     const brd = JXG.JSXGraph.initBoard(boxRef.current, {
-      boundingbox: [-2, 2, 2, -2],
+      boundingbox: [-3, 3, 3, -3],
       axis: true,
     });
     boardRef.current = brd;
 
-    // Draw unit circle centered at (0,0)
-    const circle = brd.create("circle", [[0, 0], 1], { strokeColor: "blue" });
+    // Store objects for future use
+    const shapes = {};
+    const points = {};
 
-    // Create a glider point that moves along the circle
-    const P = brd.create("glider", [1, 0, circle], { name: "P", size: 4, color: "red" });
+    config.shapes?.forEach((shape, i) => {
+      let obj;
+      if (shape.type === "circle") {
+        obj = brd.create("circle", [shape.center, shape.radius], shape.options || {});
+      } else if (shape.type === "line") {
+        obj = brd.create("line", shape.points, shape.options || {});
+      } else if (shape.type === "curve") {
+        obj = brd.create("functiongraph", [
+          (x) => eval(shape.expression),
+          shape.range[0],
+          shape.range[1]
+        ], shape.options || {});
+      }
+      if (obj) shapes[`${shape.type}${i}`] = obj;
+    });
 
-    // Projection lines for sine/cosine
-    const xLine = brd.create("line", [[0, 0], [1, 0]], { visible: false });
-    const yLine = brd.create("line", [[0, 0], [0, 1]], { visible: false });
-    brd.create("perpendicular", [xLine, P], { dash: 2 });
-    brd.create("perpendicular", [yLine, P], { dash: 2 });
+    // Create points
+    config.points?.forEach((pt, i) => {
+      let obj;
+      if (pt.type === "glider") {
+        obj = brd.create("glider", [...pt.initial, shapes[pt.on]], pt.options || {});
+      } else {
+        obj = brd.create("point", pt.initial, pt.options || {});
+      }
+      points[pt.name || `P${i}`] = obj;
 
-    // Animate P around the circle
-    let angle = 0;
-    setInterval(() => {
-      angle += 0.02; // step
-      const x = Math.cos(angle);
-      const y = Math.sin(angle);
-      P.moveTo([x, y], 100); // animate to new coords
-    }, 50);
+      // Handle animation
+      if (pt.animation) {
+        let t = 0;
+        setInterval(() => {
+          t += pt.animation.step;
+          const x = eval(pt.animation.x);
+          const y = eval(pt.animation.y);
+          obj.moveTo([x, y], 100);
+        }, pt.animation.speed);
+      }
+    });
 
-  }, []);
+  }, [config]);
 
   return (
     <div
       ref={boxRef}
-      style={{ width: "500px", height: "500px" }}
+      style={{ width: "364px", height: "364px" }}
     />
   );
 }

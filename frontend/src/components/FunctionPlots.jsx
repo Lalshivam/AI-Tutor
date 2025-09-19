@@ -66,7 +66,6 @@ export default function FunctionPlots({ config }) {
     }
 
     // 3. Add optional texts
-    // 3. Add optional texts
     if (config.texts) {
     config.texts.forEach((t) => {
         const coords = t.coords || t.position;   // handle both formats
