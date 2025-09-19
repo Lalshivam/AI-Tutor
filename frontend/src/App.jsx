@@ -71,19 +71,26 @@ function App() {
   }, [messages]);
 
   return (
+    <div className="chat-container">
+    <header className="chat-header">
+      <h1>MathVision</h1>
+    </header>
+
     <div className="messages">
-      <MessagesList messages={messages}/>
-      <div className="input-bar">
-        <input
-          type="text"
-          value={input}
-          onChange ={(e)=>setInput(e.target.value)}
-          placeholder="Ask a question..."
-          onKeyDown={(e)=>e.key === "Enter" && send()}
-        />
-      <button onClick={send}>Send</button>
-      </div>
+      <MessagesList messages={messages} />
     </div>
+
+    <div className="input-bar">
+      <input
+        type="text"
+        value={input}
+        onChange={(e) => setInput(e.target.value)}
+        placeholder="Ask a question..."
+        onKeyDown={(e) => e.key === "Enter" && send()}
+      />
+      <button onClick={send}>Send</button>
+    </div>
+  </div>
   );
 }
 export default App;
