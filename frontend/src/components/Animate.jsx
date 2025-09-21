@@ -12,11 +12,17 @@ export default function Animate({ config }) {
     if (boardRef.current) {
       JXG.JSXGraph.freeBoard(boardRef.current);
     }
-
+  
+    JXG.Options.axis.strokeColor = "white";
+    JXG.Options.axis.ticks.strokeColor = "white";
+    JXG.Options.axis.ticks.label.strokeColor = "white";
+    JXG.Options.axis.ticks.label.cssStyle = "color: white;";
+        
     const brd = JXG.JSXGraph.initBoard(boxRef.current, {
       boundingbox: [-3, 3, 3, -3],
       axis: true,
     });
+
     boardRef.current = brd;
 
     // Store objects for future use
@@ -66,7 +72,7 @@ export default function Animate({ config }) {
   return (
     <div
       ref={boxRef}
-      style={{ width: "364px", height: "364px" }}
+      style={{ width: "300px", height: "300px", backgroundColor:"#393939",  border: "2px solid #55e7ef", borderRadius: "16px"  }}
     />
   );
 }

@@ -1,5 +1,6 @@
 import { useState,useEffect, useRef } from 'react'
 import MessagesList from "./components/MessagesList";
+import { FaArrowUp } from 'react-icons/fa';
 import "./index.css";
 
 function App() {
@@ -88,7 +89,9 @@ function App() {
         placeholder="Ask a question..."
         onKeyDown={(e) => e.key === "Enter" && send()}
       />
-      <button onClick={send}>Send</button>
+      <button onClick={send} style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+      <FaArrowUp />
+    </button>
     </div>
   </div>
   );

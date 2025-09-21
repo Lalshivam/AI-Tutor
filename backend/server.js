@@ -240,7 +240,7 @@ EXPECTED JSON FORMAT:
       "points": [[x1, y1],[x2, y2]],// if line (both numeric coords)
       "expression": "function of x",// if curve (JS expression in 'x')
       "range": [min, max],          // domain for curve
-      "options": { "strokeColor": "blue", "dash": 2 }
+      "options": { "strokeColor": "white", "dash": 2 }
     }
   ],
   "points": [
@@ -249,7 +249,7 @@ EXPECTED JSON FORMAT:
       "type": "point" | "glider",
       "initial": [x, y],
       "on": "circle0" | "line0" | null, // reference to a shape key if glider (e.g., "circle0")
-      "options": { "color": "red", "size": 4 },
+      "options": { "color": "#55e7ef", "size": 4 },
       "animation": {
         "x": "expression in t",   // JavaScript-style expression using t
         "y": "expression in t",   // JavaScript-style expression using t
