@@ -11,6 +11,62 @@ body {
   margin: 0;
 }
 
+/* The wrapper for both input and button */
+.input-wrapper {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  max-width: 600px; /* Set your preferred width */
+  margin: 0 auto;
+  border-radius: 12px;
+  overflow: hidden;
+  background-color: #444654;
+}
+
+/* Input field style */
+.input-field {
+  flex: 1;
+  padding: 12px 16px;
+  font-size: 1rem;
+  color: white;
+  background-color: #343541;
+  border: none;
+  outline: none;
+  border-radius: 12px 0 0 12px; /* Left border radius */
+  transition: all 0.3s ease-in-out;
+}
+
+.input-field::placeholder {
+  color: #b4bcd0; /* Light placeholder color */
+}
+
+.input-field:focus {
+  border: 2px solid #4d8fd5; /* Blue focus border */
+  background-color: #2e3138;
+}
+
+/* Button style */
+.submit-button {
+  padding: 12px 16px;
+  background-color: #4d8fd5;
+  color: white;
+  font-size: 1rem;
+  border: none;
+  cursor: pointer;
+  border-radius: 0 12px 12px 0; /* Right border radius */
+  transition: background-color 0.3s ease;
+}
+
+.submit-button:hover {
+  background-color: #3c7fb1;
+}
+
+.submit-button:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px #4d8fd5;
+}
+
 
 /* :root {
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;

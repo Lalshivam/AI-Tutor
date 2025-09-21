@@ -62,16 +62,16 @@ export default function App() {
             )
           )}
         </div>
-        <form onSubmit={e => { e.preventDefault(); handleSend(); }} className="w-full max-w-2xl mx-auto flex gap-3 mt-8 items-center justify-center bg-[#23232b]/80 rounded-xl shadow p-4">
+        <form onSubmit={e => { e.preventDefault(); handleSend(); }} className=" mx-auto flex gap-3 mt-8 items-center justify-center  rounded-xl shadow p-4">
           <input
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder="Ask a math question..."
-            className=""
+            className="input-field"
           />
           <button
             type="submit"
-            className=""
+            className="submit-button"
           >
             Send
           </button>
