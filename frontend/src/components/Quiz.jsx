@@ -1,6 +1,7 @@
 import { useState } from "react";
 
-export default function Quiz( {quiz} ) {
+export default function Quiz( {config} ) {
+  const quiz = config; 
   const [selected, setSelected] = useState(null);
   const [result, setResult] = useState(null);
   const [currInd, setCurrInd] = useState(0);

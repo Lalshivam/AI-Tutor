@@ -9,6 +9,10 @@ export default function GeometryBoard({ config }) {
   useEffect(() => {
     if (!boxRef.current || !config) return;
 
+    JXG.Options.axis.strokeColor = "white";
+    JXG.Options.axis.ticks.strokeColor = "white";
+    JXG.Options.axis.ticks.label.strokeColor = "white";
+    JXG.Options.axis.ticks.label.cssStyle = "color: white;";
     // Clean up old board if it exists
     // if (boardRef.current) {
     //   JXG.JSXGraph.freeBoard(boardRef.current);
@@ -86,7 +90,7 @@ config.derived?.forEach(d => {
         });
       }
       break;
-    }
+    }i
     case "perpendicular": {
       const pt = points[d.of[0]];
       const ln = lines[d.of[1]];
@@ -198,12 +202,7 @@ config.derived?.forEach(d => {
   return (
     <div
       ref={boxRef}
-      style={{ 
-        width: "500px", 
-        height: "500px",
-        border: "1px solid #ddd",
-        borderRadius: "4px"
-      }}
+      style={{ width: "300px", height: "300px", backgroundColor:"#242424",  border: "2px solid #55e7ef", borderRadius: "16px"  }}
     />
   );
 }

@@ -2,8 +2,15 @@ import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
 import { GoogleGenerativeAI } from "@google/generative-ai"
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
+import { exec } from "child_process";
+
 
 dotenv.config();
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
 app.use(cors());
@@ -87,7 +94,7 @@ QUALITY CHECKLIST:
 - Does the diagram support the explanation?
 - Are coordinates reasonable and calculated correctly?
 `;
-const SYSTEM_PROMPT2 = `
+const SYSTEM_PROMPT4 = `
 You are a math tutor that explains functions with interactive diagrams.
 
 RESPONSE FORMAT:
@@ -133,7 +140,7 @@ No diagram needed:
 }
 `;
 
-const SYSTEM_PROMPT3 = `
+const SYSTEM_PROMPT2 = `
 You are a math tutor specialized in 3D visualizations. 
 Always respond with ONE valid JSON object only, containing exactly two keys:
 - "config": diagram specification (according to schema) or null
@@ -220,69 +227,65 @@ When no diagram can be made:
 }
 `;
 
-const SYSTEM_PROMPT4 = `
-You are a math animation generator.  
-The user will describe a 2D math concept or animation, and you must return ONLY a single valid JSON object with exactly three top-level keys:
-- "shapes": an array (may be empty)
-- "points": an array (may be empty)
-- "explanation": a markdown string that explains the visualization and teaches the concept from first principles
+const SYSTEM_PROMPT3 = `
+You are a math tutor that explains concepts and an animation generator.  
+The user will describe a 2D math concept or animation, and you must return ONLY a single valid JSON object with exactly two top-level keys:
+- "config": an object containing "shapes" and "points"
+- "explanation": a markdown string explaining the visualization and teaching the concept from first principles
 
 Return JSON ONLY. No extra prose or comments outside the JSON.
 
 EXPECTED JSON FORMAT:
 
 {
-  "shapes": [
-    {
-      "type": "circle" | "line" | "curve",
-      "center": [x, y],             // if circle
-      "radius": number,             // if circle
-      "points": [[x1, y1],[x2, y2]],// if line (both numeric coords)
-      "expression": "function of x",// if curve (JS expression in 'x')
-      "range": [min, max],          // domain for curve
-      "options": { "strokeColor": "white", "dash": 2 }
-    }
-  ],
-  "points": [
-    {
-      "name": "string",
-      "type": "point" | "glider",
-      "initial": [x, y],
-      "on": "circle0" | "line0" | null, // reference to a shape key if glider (e.g., "circle0")
-      "options": { "color": "#55e7ef", "size": 4 },
-      "animation": {
-        "x": "expression in t",   // JavaScript-style expression using t
-        "y": "expression in t",   // JavaScript-style expression using t
-        "step": 0.02,             // increment of t per frame (number)
-        "speed": 50               // interval ms or frame rate hint (number)
+  "config": {
+    "shapes": [
+      {
+        "type": "circle" | "line" | "curve",
+        "center": [x, y],             // if circle
+        "radius": number,             // if circle
+        "points": [[x1, y1], [x2, y2]], // if line (both numeric coords)
+        "expression": "function of x", // if curve (JS expression in 'x')
+        "range": [min, max],          // domain for curve
+        "options": { "strokeColor": "white", "dash": 2 }
       }
-    }
-  ],
-  "explanation": "Markdown explanation of the math concept (can use paragraphs, bullet points, bold text, equations in LaTeX)."
+    ],
+    "points": [
+      {
+        "name": "string",
+        "type": "point" | "glider",
+        "initial": [x, y],
+        "on": "circle0" | "line0" | null, // reference to shape if glider
+        "options": { "color": "#55e7ef", "size": 4 },
+        "animation": {
+          "x": "expression in t",   // JavaScript-style expression using t
+          "y": "expression in t",
+          "step": 0.02,             // increment per frame
+          "speed": 50               // ms/frame or interval hint
+        }
+      }
+    ]
+  },
+  "explanation": "Markdown explanation of the math concept (paragraphs, bullet points, **bold**, and LaTeX allowed)."
 }
 
 RULES:
-1. ALWAYS return a single JSON object with the three keys: "shapes", "points", "explanation".
-2. Output valid JSON only. Do not include any text outside the JSON.
-3. Provide explicit numeric coordinates and ranges (do not leave ranges implicit).
-4. If an animation is requested, include an "animation" object with x and y as functions of t.
-5. Use JavaScript-style expressions for animations and curve functions (e.g. Math.cos(t), Math.sin(t), x**2, (2*Math.sin(t))**2).
-6. Keep ranges simple and reasonable (e.g., -5 to 5, 0 to 2*Math.PI).
-7. Keep animations stable: choose step >= 0.005 and sensible speed values so motion is smooth.
-8. The "explanation" string should be written like a math tutor, using markdown for clarity (headings, bullet points, bold, LaTeX where helpful).
-9. If a shape or point reference is required (e.g., a glider "on" a shape), reference the shape by its type plus index as created in the "shapes" array (e.g., "circle0", "line1").
-10. If the requested visualization cannot be represented with this schema, return:
+1. ALWAYS return exactly two top-level keys: "config" and "explanation".
+2. "config" must include "shapes" and "points" arrays (they may be empty).
+3. Output valid JSON only — no text outside the JSON.
+4. Provide explicit numeric coordinates and reasonable ranges (no implicit defaults).
+5. Use JavaScript-style expressions for functions and animations (e.g. Math.cos(t), Math.sin(t), x**2).
+6. Keep motion smooth: step ≥ 0.005 and realistic speed values.
+7. The "explanation" must sound like a math tutor teaching from first principles, using markdown for clarity.
+8. If referencing another shape (e.g. a glider on a circle), name it as "circle0", "line1", etc.
+9. If the visualization cannot fit this schema, return:
    {
-     "shapes": [],
-     "points": [],
-     "explanation": "Markdown explanation of why no diagram/animation can be shown, and a conceptual answer."
+     "config": { "shapes": [], "points": [] },
+     "explanation": "Markdown explanation of why no diagram/animation can be shown, and a conceptual explanation instead."
    }
-11. The "initial" coordinate of any animated point must match the (x,y) values of the animation expressions at t = 0. 
-    Example: if x = cos(t), y = sin(t), then initial = [1,0].
-12. Ensure that animation expressions are periodic or looping if the user requests continuous motion 
-    (e.g., use sin, cos for oscillations instead of linear t when looping is implied).
-13. Never choose an "initial" value that conflicts with the animation path — the point must smoothly continue 
-    its motion from the starting frame.
+10. The "initial" coordinate of any animated point must match the (x,y) values of its animation at t = 0.
+11. Ensure animations are periodic or looping when continuous motion is implied (use sin/cos where needed).
+12. Never choose an "initial" that breaks continuity with the animation path.
 `;
 
 const QUIZ_PROMPT = `
@@ -290,7 +293,7 @@ You are a tutor that generates interactive quizzes.
 Always respond with ONE JSON object:
 
 {
-  "quiz": [
+  "config": [
     {
       "question": string,
       "options": [string, string, string, string],
@@ -308,23 +311,81 @@ Always respond with ONE JSON object:
 }
 
 RULES:
-- Always return an array of quiz objects (at least 8 questions).
+- Always return an array of quiz objects (at least 8 questions unless user specifies in input).
 - Each question must have exactly 4 options.
 - correctIndex is the index (0-3) of the right option.
 - Explanation must be short and clear.
 - No prose, no markdown, just JSON.
 `;
 
+const SYSTEM_PROMPT5 = `
+You are a Manim animation designer.
+Given a short math description or instruction from the user, output a single valid JSON object describing the corresponding Manim scene.
+
+The JSON must strictly follow this schema:
+
+{
+  "objects": [
+    {
+      "type": "text" | "circle" | "square" | "triangle",
+      "content": "string (if type=text)",
+      "radius": number (if type=circle),
+      "side": number (if type=square or triangle),
+      "position": [x, y, z],
+      "options": {
+        "color": "WHITE" | "BLUE" | "YELLOW" | "RED" | "GREEN",
+        "font_size": number (optional)
+      }
+    }
+  ],
+  "animations": [
+    {
+      "target": "object0",
+      "action": "write" | "create" | "rotate" | "move_to" | "scale" | "fadein" | "fadeout" | "changecolor" | "wait",
+      "angle": "PI/4" (if rotate),
+      "position": [x, y, z] (if move_to),
+      "factor": number (if scale),
+      "color": "string (if changecolor)",
+      "duration": number (if wait),
+      "run_time": number (optional, controls speed)
+    }
+  ]
+}
+
+Rules:
+1. Output valid JSON only — no extra text, no comments.
+2. Keep all numeric and symbolic values explicit (e.g., 2, -1.5, PI/3).
+3. Use fewer than 10 total objects.
+4. Target names must exactly match object indices (object0, object1, etc.).
+5. Place objects meaningfully within [-4, 4] range in 2D space.
+6. Include at least one animation if appropriate.
+7. The JSON must be fully self-contained and ready to render.
+`;
+
+
 app.post("/api/chat", async (req,res) => {
     const {InPrompt} = req.body;
-    const {Pnum} =req.body;
-    let SP="";
+    const {ftype} =req.body;
+    let SP = "You are a math tutor. Explain the user's question clearly and step by step.";
     try {
-        if(Pnum==3){
-            SP=SYSTEM_PROMPT4;
-        }
-        else{
+        switch(ftype){
+          case 1:
+            SP=SYSTEM_PROMPT1;
+            break;
+          case 2:
             SP=SYSTEM_PROMPT2;
+            break;
+          case 3:
+            SP=SYSTEM_PROMPT3;
+            break;
+          case 4:
+            SP=SYSTEM_PROMPT4;
+            break;
+          case 5:
+            SP=QUIZ_PROMPT;
+            break;
+          case 6:
+            SP=SYSTEM_PROMPT5;
         }
         const result = await model.generateContent(`${SP}\nUser: ${InPrompt}`);
         const raw_text = result.response.text();
@@ -333,12 +394,26 @@ app.post("/api/chat", async (req,res) => {
         let resobj;
         try{
             resobj = JSON.parse(text);
+            resobj.type = ftype;
             console.log(JSON.stringify(resobj, null, 2));
         } catch(err){
             console.error("JSON parse failed, raw text from gemini: ",text);
             resobj = {config: null, explanation:text};
         }
+        if(resobj.type===6){
+          fs.writeFileSync("scene.json", JSON.stringify(resobj, null, 1));
+          exec("manim -ql manim.py GeneratedScene -o output.mp4", (error, stdout, stderr) => {
+          if (error) {
+            console.error("Manim error:", stderr);
+            return res.status(500).send("Animation failed.");
+          }
+          // 4. Send file or URL to frontend
+          res.sendFile(path.resolve(__dirname, "media/videos/manim/480p15/output.mp4"));
+        });
+        }
+        else{
         res.json(resobj); 
+        }
     } catch(err) {
         console.error(err);
         res.status(500).json({text: "Error connecting to gemini api"});
@@ -348,4 +423,3 @@ app.post("/api/chat", async (req,res) => {
 app.listen(5000, () => {
     console.log("Server is running Baby!");
 });
-

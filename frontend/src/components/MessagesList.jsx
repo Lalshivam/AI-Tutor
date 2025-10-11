@@ -6,32 +6,45 @@ import Animate from "./Animate";
 import FunctionPlots from "./FunctionPlots";
 import Math3D from "./Math3D";
 import Quiz from "./Quiz";
+import VideoGen from "./VideoGen";
+import { GiChaingun } from "react-icons/gi";
 
 export default function MessagesList({ messages }){
+    const component_map = {
+        1: GeometryBoard,
+        2: Math3D,
+        3: Animate,
+        4: FunctionPlots,
+        5: Quiz,
+        6: VideoGen
+    };
     return (
     <div className="messages">
         {messages.map((msg, i) => {
         if (msg.type === "loading") {
-          return <div key={i} className="message ai loading"></div>;
+          return <div key={i} className="loading"><GiChaingun className="spin" size={16} /></div>;
         }
         if (msg.sender === "user") {
-            return <div key={i} className="message user">{msg.text}</div>;
+             return <div key={i} className="message user">{msg.text}</div>;
         }
-
-        if (msg.type === "composite") {
+        if (msg.type===5){
+            return <div key={i}><Quiz config={msg.graph}/></div>;
+        }
+        if (msg.type !== null) {
             console.log(msg);
+            const VizComponent = component_map[msg.type];
             return (
             <div key={i} className="message ai">
                 {msg.text && <p className="ai-text">{msg.text}</p>}
                 {msg.graph &&
                 <div className="ai-graph">
-                 <Animate config={msg.graph} />
+                 <VizComponent config={msg.graph} />
                 </div> 
                 }
-                {msg.exp && <p className="ai-exp">
+                {msg.exp && <div className="ai-exp">
                     <div className="markdown">
                     <ReactMarkdown>{msg.exp}</ReactMarkdown>
-                    </div></p>
+                    </div></div>
                 }
             </div>
             );
@@ -40,5 +53,4 @@ export default function MessagesList({ messages }){
         return <div key={i} className="message ai"><ReactMarkdown>{msg.exp}</ReactMarkdown></div>;
         })}
     </div>
-    );
-}
+    );}

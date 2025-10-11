@@ -1,22 +1,35 @@
 import { useState,useEffect, useRef } from 'react'
 import MessagesList from "./components/MessagesList";
-import { FaArrowUp } from 'react-icons/fa';
+import { FaArrowUp, FaPlus } from 'react-icons/fa';
+import { TbGeometry } from "react-icons/tb";
+import { CiSquarePlus } from "react-icons/ci";
+import { MdMenu } from "react-icons/md";
 import "./index.css";
 
 function App() {
   const[messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const messagesEndRef = useRef(null);
+  const[Dropdown, setDropdown] = useState(false);
+  const[feature, setfeature]  =useState(null);
   const [loading, SetLoading]  = useState(false);
+  const[videoUrl, setVideoUrl] = useState(null);
+  
+  const FEATURES = [
+  { label: "2D Visual", value: 1 },
+  { label: "3D Visual", value: 2 },
+  { label: "2D Animation", value: 3 },
+  { label: "Function Plots", value: 4 },
+  { label: "Prepare Quiz", value: 5 },
+  { label: "Video Generation", value:6}
+  ];
 
   const send = async() => {
   if (!input.trim()) return;
 
-  let type = input.includes("Math") ? "composite" : "normal";
-
   setMessages((prev) => [
     ...prev,
-    { sender: "user", text: input, type: "normal" }
+    { sender: "user", text: input}
   ]);
 
   SetLoading(true);
@@ -25,33 +38,43 @@ function App() {
     { sender: "ai", type: "loading"}
   ]);
 
-  try {
+  try{
+  let inp = input;
+  setInput("");
   const ans = await fetch("http://localhost:5000/api/chat", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ InPrompt: input, Pnum: 3}),
+      body: JSON.stringify({ InPrompt: inp, ftype:feature}),
     });
 
-  const data = await ans.json();
-      setMessages((prev) => {
-        // remove the "loading" placeholder
+  let data;
+  let videoObjectUrl;
+  if(feature===6){
+    const blob = await ans.blob();
+    videoObjectUrl = URL.createObjectURL(blob); // store in a variable
+    setVideoUrl(videoObjectUrl);
+  }
+  else{
+    data = await ans.json();
+  }
+     setMessages((prev) => {
         const withoutLoading = prev.filter((m) => m.type !== "loading");
-
         let newMsgs = [];
-        if (type === "composite") {
+        if(feature===6){
           newMsgs.push({
             sender: "ai",
-            type: "composite",
+            type: 6,
+            graph: videoObjectUrl,
+          });
+        }
+        else{
+          newMsgs.push({
+            sender: "ai",
+            type: data.type,
             text: "Here is the visualization of the equation :",
-            graph: data,
+            graph: data.config,
             exp: data.explanation
           });
-        } else {
-          newMsgs.push({
-            sender: "ai",
-            type: "normal",
-            exp: data.explanation
-          }); 
         }
         return [...withoutLoading, ...newMsgs];
       });
@@ -62,7 +85,7 @@ function App() {
         { sender: "ai", type: "error", text: "⚠️ Something went wrong." }
       ]);
     } finally {
-      SetLoading(false); // reset loading
+      SetLoading(false);
       setInput("");
     }
   };
@@ -74,14 +97,40 @@ function App() {
   return (
     <div className="chat-container">
     <header className="chat-header">
-      <h1>MathVision</h1>
+      <MdMenu className='menu'/>
+      <TbGeometry className="h-icon" /> 
+      <h1 className='name' >MathVision</h1>
+      <CiSquarePlus className='newchat'/>
     </header>
-
+    
     <div className="messages">
       <MessagesList messages={messages} />
     </div>
 
     <div className="input-bar">
+      <div className='feature-drop-wrapper'>
+        <button
+          className='feat-btn'
+          onClick={() => setDropdown(v=>!v)}          
+          tabIndex={-1}
+          > <FaPlus />
+        </button>
+        {Dropdown && (
+          <div className='feature-drop'>
+            {FEATURES.map(f => (
+              <div
+                key={f.value}
+                onClick = {() => {setfeature(f.value); setDropdown(false);}} 
+                className={
+                  "feature-item" + (feature === f.value ? " sel" : "")
+                }>
+                  {f.label}
+              </div>
+            ))}
+          </div>
+          )
+        }
+      </div>
       <input
         type="text"
         value={input}
@@ -97,3 +146,5 @@ function App() {
   );
 }
 export default App;
+
+ 

@@ -92,7 +92,7 @@ export default function Math3D({ config }) {
       if (!m.x || !m.y || !m.z || !m.i || !m.j || !m.k) {
         console.warn(`Mesh3D missing required fields (index ${idx})`);
         return;
-      }
+      } 
       out.push({
         type: "mesh3d",
         x: m.x,
@@ -111,10 +111,22 @@ export default function Math3D({ config }) {
 
   return (
     <Plot
-      data={data}
-      layout={config.layout || { title: "3D Visualization" }}
-      style={{ width: "100%", height: "600px" }}
-      config={{ responsive: true }}
-    />
+    data={data}
+    layout={{
+      ...config.layout,
+      autosize: true,
+      margin: { l: 0, r: 0, b: 0, t: 30, pad: 0 },
+      scene: { aspectmode: "cube" },
+    }}
+    style={{
+      width: "300px",
+      height: "300px",
+      backgroundColor: "#242424",
+      border: "2px solid #55e7ef",
+      borderRadius: "16px",
+      overflow: "hidden"
+    }}
+    config={{ responsive: true }}
+  />
   );
-}
+} 

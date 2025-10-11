@@ -82,5 +82,5 @@ export default function FunctionPlots({ config }) {
     }
   }, [config]);
 
-  return <div ref={boxRef} style={{ width: "500px", height: "500px" }} />;
+  return <div ref={boxRef} style={{ width: "300px", height: "300px", backgroundColor:"#242424",  border: "2px solid #55e7ef", borderRadius: "16px"  }} />;
 }

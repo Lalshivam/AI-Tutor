@@ -1,0 +1,54 @@
+{
+ "objects": [
+  {
+   "type": "text",
+   "content": "z = x^2 + y^2",
+   "position": [
+    0,
+    3,
+    0
+   ],
+   "options": {
+    "color": "WHITE"
+   }
+  },
+  {
+   "type": "circle",
+   "radius": 1,
+   "position": [
+    0,
+    -1,
+    0
+   ],
+   "options": {
+    "color": "BLUE"
+   }
+  },
+  {
+   "type": "text",
+   "content": "Rotation",
+   "position": [
+    0,
+    -3,
+    0
+   ],
+   "options": {
+    "color": "YELLOW"
+   }
+  }
+ ],
+ "animations": [
+  {
+   "target": "object1",
+   "action": "rotate",
+   "angle": "PI/4",
+   "run_time": 2
+  },
+  {
+   "target": "object2",
+   "action": "fadein",
+   "run_time": 1
+  }
+ ],
+ "type": 6
+}

@@ -72,7 +72,7 @@ export default function Animate({ config }) {
   return (
     <div
       ref={boxRef}
-      style={{ width: "300px", height: "300px", backgroundColor:"#393939",  border: "2px solid #55e7ef", borderRadius: "16px"  }}
+      style={{ width: "300px", height: "300px", backgroundColor:"#242424",  border: "2px solid #55e7ef", borderRadius: "16px"  }}
     />
   );
 }
