@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "dev": "nodemon server.ts",
-    "start" : "ts-node server.ts",
+    "start": "ts-node server.ts",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "Shivam Kumar Lal",
@@ -17,7 +17,8 @@
     "dotenv": "^17.2.2",
     "express": "^5.1.0",
     "mathjs": "^14.7.0",
-    "nerdamer": "^1.1.13"
+    "nerdamer": "^1.1.13",
+    "react-katex": "^3.1.0"
   },
   "devDependencies": {
     "@types/cors": "^2.8.19",
