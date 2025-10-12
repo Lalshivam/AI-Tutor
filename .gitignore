@@ -8,3 +8,4 @@ backend/.env
 
 # build output
 frontend/build
+backend/media

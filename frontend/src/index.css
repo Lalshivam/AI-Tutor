@@ -92,6 +92,7 @@ body {
 }
 .ai-graph{
   align-self: center;
+  flex: 0 0 auto;
 }
 
 .input-bar {

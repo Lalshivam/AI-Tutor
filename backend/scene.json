@@ -1,23 +1,26 @@
 {
  "objects": [
   {
+   "id": "title",
    "type": "text",
-   "content": "z = x^2 + y^2",
+   "content": "Unit Circle and Coordinates",
    "position": [
     0,
     3,
     0
    ],
    "options": {
-    "color": "WHITE"
+    "color": "WHITE",
+    "font_size": 36
    }
   },
   {
+   "id": "circle",
    "type": "circle",
-   "radius": 1,
+   "radius": 2,
    "position": [
     0,
-    -1,
+    0,
     0
    ],
    "options": {
@@ -25,29 +28,143 @@
    }
   },
   {
-   "type": "text",
-   "content": "Rotation",
+   "id": "dot",
+   "type": "dot",
    "position": [
+    2,
     0,
-    -3,
     0
    ],
    "options": {
-    "color": "YELLOW"
+    "color": "YELLOW",
+    "radius": 0.1
+   }
+  },
+  {
+   "id": "x_axis",
+   "type": "line",
+   "start": [
+    0,
+    0,
+    0
+   ],
+   "end": [
+    2,
+    0,
+    0
+   ],
+   "options": {
+    "color": "LIGHT_GRAY"
+   }
+  },
+  {
+   "id": "y_axis",
+   "type": "line",
+   "start": [
+    2,
+    0,
+    0
+   ],
+   "end": [
+    2,
+    0.0001,
+    0
+   ],
+   "options": {
+    "color": "LIGHT_GRAY"
+   }
+  },
+  {
+   "id": "x_coord",
+   "type": "text",
+   "content": "x = ",
+   "position": [
+    3,
+    -2,
+    0
+   ],
+   "options": {
+    "color": "WHITE",
+    "font_size": 24
+   }
+  },
+  {
+   "id": "y_coord",
+   "type": "text",
+   "content": "y = ",
+   "position": [
+    -3,
+    -2,
+    0
+   ],
+   "options": {
+    "color": "WHITE",
+    "font_size": 24
    }
   }
  ],
  "animations": [
   {
-   "target": "object1",
-   "action": "rotate",
-   "angle": "PI/4",
-   "run_time": 2
+   "target": "title",
+   "action": "write",
+   "run_time": 1
   },
   {
-   "target": "object2",
+   "target": "circle",
+   "action": "create",
+   "run_time": 1.5
+  },
+  {
+   "target": "dot",
    "action": "fadein",
-   "run_time": 1
+   "run_time": 0.5
+  },
+  {
+   "target": "x_axis",
+   "action": "create",
+   "run_time": 0.7
+  },
+  {
+   "target": "y_axis",
+   "action": "create",
+   "run_time": 0.7
+  },
+  {
+   "target": "x_coord",
+   "action": "write",
+   "run_time": 0.7
+  },
+  {
+   "target": "y_coord",
+   "action": "write",
+   "run_time": 0.7
+  },
+  {
+   "target": "wait",
+   "action": "wait",
+   "duration": 1
+  },
+  {
+   "target": "dot",
+   "action": "rotate",
+   "angle": "2*PI",
+   "run_time": 4,
+   "about_point": [
+    0,
+    0,
+    0
+   ]
+  },
+  {
+   "target": "x_axis",
+   "action": "rotate",
+   "angle": "2*PI",
+   "run_time": 4,
+   "about_point": [
+    0,
+    0,
+    0
+   ]
   }
  ],
  "type": 6

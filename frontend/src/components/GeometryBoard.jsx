@@ -17,11 +17,13 @@ export default function GeometryBoard({ config }) {
     // if (boardRef.current) {
     //   JXG.JSXGraph.freeBoard(boardRef.current);
     // }
-
+    boxRef.current.setAttribute("id", "jxg-box");
     // Init new board
-    const brd = JXG.JSXGraph.initBoard(boxRef.current, {
-      boundingbox: [-2,10,10, -2],
+    const brd = JXG.JSXGraph.initBoard("jxg-box", {
+      boundingbox: [-5, 5, 5, -5],
       axis: true,
+      width:300,
+      height:300
     });
     boardRef.current = brd;
 
@@ -202,7 +204,9 @@ config.derived?.forEach(d => {
   return (
     <div
       ref={boxRef}
-      style={{ width: "300px", height: "300px", backgroundColor:"#242424",  border: "2px solid #55e7ef", borderRadius: "16px"  }}
+      style={{ width: "300px", height: "300px", 
+      backgroundColor:"#242424",  
+      border: "2px solid #55e7ef", borderRadius: "16px", flex: "0 0 auto"}}
     />
   );
 }
