@@ -3,7 +3,6 @@ import Graph from "./Graph";
 import ReactMarkdown from "react-markdown";
 import GeometryBoard from "./GeometryBoard";
 import Animate from "./Animate";
-import FunctionPlots from "./FunctionPlots";
 import Math3D from "./Math3D";
 import Quiz from "./Quiz";
 import VideoGen from "./VideoGen";

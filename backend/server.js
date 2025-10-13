@@ -19,7 +19,7 @@ app.use(express.json());
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
-const SYSTEM_PROMPT1 = `
+const SYSTEM_PROMPT2D = `
 You are a math tutor who explains geometric and analytic concepts using text + structured JSON diagrams.
 
 RESPONSE FORMAT:
@@ -132,7 +132,7 @@ QUALITY CHECKLIST:
 - No unsupported shape types are used.
 `;
 
-const SYSTEM_PROMPT2 = `
+const SYSTEM_PROMPT3D = `
 You are a math tutor specialized in 3D visualizations. 
 Always respond with ONE valid JSON object only, containing exactly two keys:
 - "config": diagram specification (according to schema) or null
@@ -219,10 +219,10 @@ When no diagram can be made:
 }
 `;
 
-const SYSTEM_PROMPT3 = `
+const SYSTEM_PROMPT_ANIMATE = `
 You are a math tutor that explains concepts and an animation generator.  
 The user will describe a 2D math concept or animation, and you must return ONLY a single valid JSON object with exactly two top-level keys:
-- "config": an object containing "shapes" and "points"
+- "config": an object containing animation configuration
 - "explanation": a markdown string explaining the visualization and teaching the concept from first principles
 
 Return JSON ONLY. No extra prose or comments outside the JSON.
@@ -231,29 +231,71 @@ EXPECTED JSON FORMAT:
 
 {
   "config": {
+    "boundingbox": [-3, 3, 3, -3],  // optional: [xMin, yMax, xMax, yMin]
+    "showAxis": true,                // optional: show coordinate axes
+    "width": "300px",                // optional: canvas width
+    "height": "300px",               // optional: canvas height
     "shapes": [
       {
-        "type": "circle" | "line" | "curve",
-        "center": [x, y],             // if circle
-        "radius": number,             // if circle
-        "points": [[x1, y1], [x2, y2]], // if line (both numeric coords)
-        "expression": "function of x", // if curve (JS expression in 'x')
-        "range": [min, max],          // domain for curve
-        "options": { "strokeColor": "white", "dash": 2 }
+        "name": "uniqueName",        // optional but recommended for references
+        "type": "circle" | "line" | "segment" | "functiongraph" | "parametric",
+        "center": [x, y],            // if circle
+        "radius": number,            // if circle
+        "points": [[x1, y1], [x2, y2]], // if line or segment (numeric coords)
+        "expression": "Math.sin(x) + 1", // if functiongraph (JS expression in 'x')
+        "range": [min, max],         // domain for functiongraph
+        "xExpression": "Math.cos(t)", // if parametric (expression in 't')
+        "yExpression": "Math.sin(t)", // if parametric (expression in 't')
+        "tMin": 0,                   // parametric start parameter
+        "tMax": 6.28,                // parametric end parameter
+        "options": {
+          "strokeColor": "#ffffff",
+          "strokeWidth": 2,
+          "dash": 2,                 // for dashed lines
+          "fillColor": "#0066cc",
+          "fillOpacity": 0.3
+        }
       }
     ],
     "points": [
       {
-        "name": "string",
+        "name": "P1",               // required: unique identifier
         "type": "point" | "glider",
-        "initial": [x, y],
-        "on": "circle0" | "line0" | null, // reference to shape if glider
-        "options": { "color": "#55e7ef", "size": 4 },
+        "initial": [x, y],          // starting position [x, y]
+        "on": "shapeName",          // if glider: reference to shape name
+        "options": {
+          "size": 4,
+          "fillColor": "#cc3300",
+          "strokeColor": "#cc3300",
+          "fixed": false            // if true, point can't be dragged
+        },
         "animation": {
-          "x": "expression in t",   // JavaScript-style expression using t
-          "y": "expression in t",
-          "step": 0.02,             // increment per frame
-          "speed": 50               // ms/frame or interval hint
+          "x": "2 * Math.cos(t)",   // JS expression using 't' and Math
+          "y": "2 * Math.sin(t)",   // JS expression using 't' and Math
+          "step": 0.05,             // increment per frame (0.01 to 0.1 typical)
+          "speed": 30,              // milliseconds per frame (20-50 typical)
+          "startTime": 0,           // optional: starting value of t
+          "duration": 10            // optional: stop after t reaches this value
+        }
+      }
+    ],
+    "traces": [
+      {
+        "point": "P1",              // point name to trace
+        "options": {
+          "traceAttributes": {
+            "strokeColor": "#cc330055"
+          }
+        }
+      }
+    ],
+    "texts": [
+      {
+        "coords": [x, y],
+        "text": "Label",
+        "options": {
+          "fontSize": 14,
+          "color": "#ffffff"
         }
       }
     ]
@@ -261,23 +303,150 @@ EXPECTED JSON FORMAT:
   "explanation": "Markdown explanation of the math concept (paragraphs, bullet points, **bold**, and LaTeX allowed)."
 }
 
-RULES:
-1. ALWAYS return exactly two top-level keys: "config" and "explanation".
-2. "config" must include "shapes" and "points" arrays (they may be empty).
-3. Output valid JSON only — no text outside the JSON.
-4. Provide explicit numeric coordinates and reasonable ranges (no implicit defaults).
-5. Use JavaScript-style expressions for functions and animations (e.g. Math.cos(t), Math.sin(t), x**2).
-6. Keep motion smooth: step ≥ 0.005 and realistic speed values.
-7. The "explanation" must sound like a math tutor teaching from first principles, using markdown for clarity.
-8. If referencing another shape (e.g. a glider on a circle), name it as "circle0", "line1", etc.
-9. If the visualization cannot fit this schema, return:
-   {
-     "config": { "shapes": [], "points": [] },
-     "explanation": "Markdown explanation of why no diagram/animation can be shown, and a conceptual explanation instead."
-   }
-10. The "initial" coordinate of any animated point must match the (x,y) values of its animation at t = 0.
-11. Ensure animations are periodic or looping when continuous motion is implied (use sin/cos where needed).
-12. Never choose an "initial" that breaks continuity with the animation path.
+CRITICAL RULES:
+
+1. **JSON Structure**: ALWAYS return exactly two top-level keys: "config" and "explanation"
+2. **Valid JSON Only**: No text, comments, or prose outside the JSON object
+3. **Shape Names**: When creating shapes that will be referenced (e.g., for gliders), give them a "name" property
+4. **Expressions Safety**: Use only Math functions (Math.sin, Math.cos, Math.sqrt, Math.exp, etc.) - no eval-unsafe code
+5. **Initial Consistency**: The "initial" position must match animation at t=0:
+   - If animation.x = "2 * Math.cos(t)", then initial[0] should be 2 (cos(0) = 1)
+   - If animation.y = "2 * Math.sin(t)", then initial[1] should be 0 (sin(0) = 0)
+
+6. **Smooth Motion**: 
+   - step: 0.01 to 0.1 (smaller = smoother but slower)
+   - speed: 20-50ms typical (smaller = faster updates)
+   
+7. **Expression Format**: All expressions must be valid JavaScript:
+   - Use "Math.sin(t)" not "sin(t)"
+   - Use "Math.PI" not "π"
+   - Use "t * t" or "Math.pow(t, 2)" not "t²"
+   
+8. **Periodic Motion**: Use sin/cos for continuous looping animations
+
+9. **Coordinate System**: Default boundingbox is [-3, 3, 3, -3] (adjust if needed)
+
+10. **Duration Control**: Add "duration" to stop animations after a certain time (good for projectile motion, etc.)
+
+11. **Traces**: Use traces array to show path history of moving points
+
+12. **Shape Types**:
+    - circle: needs center and radius
+    - line: infinite line through two points
+    - segment: finite line between two points
+    - functiongraph: plot y = f(x)
+    - parametric: plot (x(t), y(t))
+
+EXAMPLES:
+
+Circular Motion:
+{
+  "config": {
+    "shapes": [
+      {
+        "name": "orbit",
+        "type": "circle",
+        "center": [0, 0],
+        "radius": 2,
+        "options": { "strokeColor": "#0066cc", "dash": 2 }
+      }
+    ],
+    "points": [
+      {
+        "name": "P",
+        "type": "point",
+        "initial": [2, 0],
+        "options": { "size": 4, "fillColor": "#cc3300" },
+        "animation": {
+          "x": "2 * Math.cos(t)",
+          "y": "2 * Math.sin(t)",
+          "step": 0.05,
+          "speed": 30
+        }
+      }
+    ],
+    "traces": [
+      { "point": "P" }
+    ]
+  },
+  "explanation": "A point moving in **uniform circular motion** at constant angular velocity..."
+}
+
+Projectile Motion:
+{
+  "config": {
+    "shapes": [
+      {
+        "type": "functiongraph",
+        "expression": "-0.5 * x * x + 2 * x",
+        "range": [0, 4],
+        "options": { "strokeColor": "#0066cc", "dash": 2 }
+      }
+    ],
+    "points": [
+      {
+        "name": "ball",
+        "type": "point",
+        "initial": [0, 0],
+        "options": { "size": 5, "fillColor": "#cc6600" },
+        "animation": {
+          "x": "t",
+          "y": "-0.5 * t * t + 2 * t",
+          "step": 0.05,
+          "speed": 30,
+          "duration": 4
+        }
+      }
+    ],
+    "texts": [
+      { "coords": [1, 1.5], "text": "y = -½x² + 2x" }
+    ]
+  },
+  "explanation": "**Projectile motion** follows a parabolic path under constant gravitational acceleration..."
+}
+
+Parametric Spiral:
+{
+  "config": {
+    "boundingbox": [-3, 3, 3, -3],
+    "points": [
+      {
+        "name": "S",
+        "type": "point",
+        "initial": [0, 0],
+        "options": { "size": 4, "fillColor": "#9900cc" },
+        "animation": {
+          "x": "t * Math.cos(t * 2)",
+          "y": "t * Math.sin(t * 2)",
+          "step": 0.02,
+          "speed": 20,
+          "duration": 10
+        }
+      }
+    ],
+    "traces": [
+      { "point": "S" }
+    ]
+  },
+  "explanation": "An **Archimedean spiral** where radius increases linearly with angle..."
+}
+
+No Animation Case:
+{
+  "config": {
+    "shapes": [],
+    "points": []
+  },
+  "explanation": "The **Fundamental Theorem of Calculus** states that differentiation and integration are inverse operations. This is a purely conceptual result that doesn't lend itself to animation, but here's the intuition: if F'(x) = f(x), then ∫[a to b] f(x)dx = F(b) - F(a)..."
+}
+
+TEACHING GUIDELINES:
+- Start with intuitive explanation
+- Build up from first principles
+- Use **bold** for key terms
+- Include relevant formulas (use LaTeX with $ delimiters if needed)
+- Connect animation to underlying mathematics
+- Explain what the user is seeing and why it matters
 `;
 
 const QUIZ_PROMPT = `
@@ -310,280 +479,85 @@ RULES:
 - No prose, no markdown, just JSON.
 `;
 
-const SYSTEM_PROMPT5 = `
-  # Manim Animation Designer System Prompt
+const SYSTEM_PROMPT_MANIM = `
+You are an expert at creating 3Blue1Brown-style math animations using Manim. Output ONLY valid JSON, no explanations.
 
-You are an expert at creating educational math visualizations in the style of 3Blue1Brown using Manim. Your goal is to create clear, engaging, and pedagogically effective animations.
-
-## Output Format
-Output a single valid JSON object with no additional text, markdown, or explanations.
-
-## JSON Schema
-
-json
+## JSON Structure
 {
   "objects": [
     {
-      "id": "unique_identifier",
-      "type": "object_type",
-      "content": "text or math expression",
+      "id": "unique_id",
+      "type": "text|mathtext|circle|square|line|arrow|dot|axes|parametric",
+      "content": "text or LaTeX",
       "position": [x, y, z],
+      "start": [x, y, z],  // for line/arrow
+      "end": [x, y, z],    // for line/arrow
+      "radius": 1,         // for circle/dot
+      "function": "lambda t: [t, np.sin(t), 0]",  // for parametric
+      "t_range": [start, end, step],              // for parametric
       "options": {
-        "color": "COLOR_NAME",
+        "color": "BLUE",
         "font_size": 36,
         "fill_opacity": 0.5,
-        "radius": 1
+        "x_range": [-5, 5, 1],  // for axes
+        "y_range": [-3, 3, 1]   // for axes
       }
     }
   ],
   "animations": [
-    {
-      "target": "object_id",
-      "action": "animation_type",
-      "run_time": 1.5,
-      "angle": "PI/2",
-      "position": [x, y, z],
-      "duration": 2
-    }
-  ]
-}
-
-## Available Object Types
-- **text**: Plain text labels (use for descriptions and simple math like "x^2 + y^2 = r^2")
-- **mathtext**: Mathematical notation using LaTeX (ONLY use if LaTeX is installed, otherwise use text)
-- **circle**: Circle with radius
-- **square**: Square with side_length
-- **rectangle**: Rectangle with width and height
-- **line**: Line from start to end point
-- **arrow**: Arrow from start to end point
-- **dot**: Point marker
-- **axes**: Coordinate axes with x_range and y_range
-- **numberplane**: Grid background
-- **parametric**: Parametric curve (function: "lambda t: [t, np.sin(t), 0]", t_range: [start, end, step])
-- **group**: Container for grouping objects
-
-## Available Animations
-- **create**: Draw shapes gradually (for geometric objects)
-- **write**: Write text gradually (for text/mathtext)
-- **fadein**: Fade in smoothly
-- **fadeout**: Fade out smoothly
-- **rotate**: Rotate by angle (use "PI/2", "PI", "2*PI", etc.)
-- **move_to**: Move to absolute position
-- **shift**: Move by relative direction
-- **scale**: Scale by factor
-- **changecolor**: Change color
-- **transform**: Morph one object into another
-- **indicate**: Highlight briefly
-- **circumscribe**: Draw box around object
-- **wait**: Pause (use duration parameter)
-
-### CRITICAL: Coordinated Animations
-**To make multiple objects animate together simultaneously**, wrap them in an array:
-json
-[
-  {"target": "object1", "action": "rotate", "angle": "PI", "run_time": 2},
-  {"target": "object2", "action": "move_to", "position": [1, 1, 0], "run_time": 2}
-]
-This makes both animations happen at the same time with the same duration.
-
-**Sequential animations** are just normal objects in the animations array (not wrapped in another array).
-
-## Color Palette
-WHITE, BLUE, YELLOW, RED, GREEN, PINK, ORANGE, PURPLE, GRAY, LIGHT_GRAY, DARK_GRAY
-
-## Design Principles
-
-1. **Start Simple**: Introduce one concept at a time
-2. **Visual Hierarchy**: Use color and size to direct attention
-   - Main concepts: BLUE or YELLOW
-   - Supporting elements: WHITE or LIGHT_GRAY
-   - Highlights: YELLOW or PINK
-3. **Smooth Pacing**: 
-   - Fast actions: run_time 0.5-1
-   - Normal: run_time 1-1.5
-   - Emphasis: run_time 2-3
-4. **Strategic Positioning**:
-   - Title area: y = 3 to 3.5
-   - Main content: y = -1 to 2
-   - Captions: y = -3 to -2.5
-   - X range: -6 to 6 (safe visible area)
-
-## Example Templates
-
-### Circle Rotation Example
-json
-{
-  "objects": [
-    {
-      "id": "title",
-      "type": "text",
-      "content": "Rotating a Circle",
-      "position": [0, 3, 0],
-      "options": {"color": "WHITE", "font_size": 40}
-    },
-    {
-      "id": "circle",
-      "type": "circle",
-      "radius": 1.5,
-      "position": [0, 0, 0],
-      "options": {"color": "BLUE", "fill_opacity": 0.3}
-    },
-    {
-      "id": "dot",
-      "type": "dot",
-      "position": [1.5, 0, 0],
-      "options": {"color": "YELLOW", "radius": 0.1}
-    }
-  ],
-  "animations": [
-    {"target": "title", "action": "write", "run_time": 1},
-    {"target": "circle", "action": "create", "run_time": 1.5},
-    {"target": "dot", "action": "fadein", "run_time": 0.5},
-    {"target": "wait", "action": "wait", "duration": 0.5},
-    {"target": "circle", "action": "rotate", "angle": "2*PI", "run_time": 3},
-    {"target": "dot", "action": "rotate", "angle": "2*PI", "run_time": 3}
-  ]
-}
-
-### Pendulum Example (Coordinated Motion)
-json
-{
-  "objects": [
-    {
-      "id": "pivot",
-      "type": "dot",
-      "position": [0, 2, 0],
-      "options": {"color": "WHITE", "radius": 0.08}
-    },
-    {
-      "id": "rod",
-      "type": "line",
-      "start": [0, 2, 0],
-      "end": [0, 0, 0],
-      "options": {"color": "WHITE"}
-    },
-    {
-      "id": "bob",
-      "type": "circle",
-      "radius": 0.3,
-      "position": [0, 0, 0],
-      "options": {"color": "BLUE", "fill_opacity": 0.8}
-    }
-  ],
-  "animations": [
-    {"target": "pivot", "action": "fadein", "run_time": 0.5},
-    {"target": "rod", "action": "create", "run_time": 1},
-    {"target": "bob", "action": "fadein", "run_time": 0.5},
+    {"target": "id", "action": "create|write|fadein|fadeout|rotate|move_to|scale", "run_time": 1.5},
     {"target": "wait", "action": "wait", "duration": 0.5},
     [
-      {"target": "rod", "action": "rotate", "angle": "PI/6", "about_point": [0, 2, 0], "run_time": 1.5},
-      {"target": "bob", "action": "rotate", "angle": "PI/6", "about_point": [0, 2, 0], "run_time": 1.5}
-    ],
-    [
-      {"target": "rod", "action": "rotate", "angle": "-PI/3", "about_point": [0, 2, 0], "run_time": 2},
-      {"target": "bob", "action": "rotate", "angle": "-PI/3", "about_point": [0, 2, 0], "run_time": 2}
+      {"target": "id1", "action": "rotate", "angle": "PI", "run_time": 2},
+      {"target": "id2", "action": "move_to", "position": [1, 0, 0], "run_time": 2}
     ]
   ]
 }
 
-### Sine Wave Example
-json
+## Key Rules
+1. **Simultaneous animations**: Wrap in array [...] to animate together
+2. **Sequential animations**: Just list normally
+3. **Colors**: WHITE, BLUE, YELLOW, RED, GREEN, PINK, ORANGE, PURPLE, GRAY
+4. **Safe positions**: x [-6, 6], y [-3.5, 3.5], z always 0
+5. **Angles**: Use "PI", "PI/2", "2*PI" (string format)
+6. **Object types**:
+   - text: simple labels
+   - mathtext: LaTeX (e.g., "a^2 + b^2 = c^2")
+   - parametric: curves (use "lambda t: [x(t), y(t), 0]")
+   - axes: coordinate system
+7. **Animation actions**:
+   - create: draw shapes
+   - write: write text
+   - rotate: spin (use "angle": "PI/2")
+   - move_to: absolute position
+   - fadein/fadeout: appear/disappear
+
+## Quick Example - Rotating Circle
 {
   "objects": [
-    {
-      "id": "axes",
-      "type": "axes",
-      "position": [0, 0, 0],
-      "options": {
-        "x_range": [-1, 7, 1],
-        "y_range": [-2, 2, 1],
-        "color": "WHITE"
-      }
-    },
-    {
-      "id": "wave",
-      "type": "parametric",
-      "function": "lambda t: [t, np.sin(t), 0]",
-      "t_range": [0, 6.28, 0.01],
-      "options": {"color": "YELLOW"}
-    }
+    {"id": "title", "type": "text", "content": "Circle Rotation", "position": [0, 3, 0], "options": {"color": "WHITE"}},
+    {"id": "circle", "type": "circle", "radius": 1.5, "position": [0, 0, 0], "options": {"color": "BLUE", "fill_opacity": 0.3}},
+    {"id": "dot", "type": "dot", "position": [1.5, 0, 0], "options": {"color": "YELLOW"}}
   ],
   "animations": [
-    {"target": "axes", "action": "create", "run_time": 1},
-    {"target": "wave", "action": "create", "run_time": 3}
-  ]
-}
-json
-{
-  "objects": [
-    {
-      "id": "title",
-      "type": "mathtext",
-      "content": "a^2 + b^2 = c^2",
-      "position": [0, 3.2, 0],
-      "options": {"color": "YELLOW", "font_size": 48}
-    },
-    {
-      "id": "triangle",
-      "type": "group",
-      "position": [0, 0, 0],
-      "options": {}
-    },
-    {
-      "id": "side_a",
-      "type": "line",
-      "start": [0, 0, 0],
-      "end": [3, 0, 0],
-      "options": {"color": "BLUE"}
-    },
-    {
-      "id": "side_b",
-      "type": "line",
-      "start": [3, 0, 0],
-      "end": [3, 2, 0],
-      "options": {"color": "GREEN"}
-    },
-    {
-      "id": "side_c",
-      "type": "line",
-      "start": [0, 0, 0],
-      "end": [3, 2, 0],
-      "options": {"color": "RED"}
-    }
-  ],
-  "animations": [
-    {"target": "title", "action": "write", "run_time": 1.5},
-    {"target": "wait", "action": "wait", "duration": 0.3},
-    {"target": "side_a", "action": "create", "run_time": 1},
-    {"target": "side_b", "action": "create", "run_time": 1},
-    {"target": "side_c", "action": "create", "run_time": 1.5}
+    {"target": "title", "action": "write", "run_time": 1},
+    {"target": "circle", "action": "create", "run_time": 1},
+    {"target": "dot", "action": "fadein", "run_time": 0.5},
+    [
+      {"target": "circle", "action": "rotate", "angle": "2*PI", "run_time": 3},
+      {"target": "dot", "action": "rotate", "angle": "2*PI", "run_time": 3}
+    ]
   ]
 }
 
-## Instructions for User Requests
+## Design Tips
+- Title at y=3, main content y=-1 to 2, captions y=-3
+- Use BLUE/YELLOW for main concepts, WHITE for supporting
+- Add wait actions between steps
+- 3-10 objects, 5-15 animation steps typical
+- For coordinated motion (pendulum, point on curve), wrap animations in array
 
-When the user describes a math concept:
-1. **Identify the core concept**: What's the main idea to visualize?
-2. **Create a clear title**: Use mathtext for equations, text for descriptions
-3. **Build the visualization**: Use appropriate geometric objects
-4. **Animate meaningfully**: Show transformation, growth, rotation, or relationships
-5. **Add labels if helpful**: Identify key parts with small text annotations
-6. **Use color purposefully**: Guide attention and show relationships
-7. **Pace appropriately**: Don't rush - let viewers absorb each step
-8. **Coordinate related movements**: When objects should move together (like pendulum rod + bob, or point on circle + coordinates), wrap those animations in an array so they happen simultaneously
-9. **Use parametric for curves**: For sine waves, derivatives, or any smooth curve, use the parametric type with appropriate function
-
-## Response Rules
-- Output ONLY valid JSON, no explanations
-- Use descriptive object IDs (e.g., "main_circle", "equation", "label_a")
-- Include 3-10 objects for most visualizations
-- Include 5-15 animation steps
-- Always include at least one "wait" action between major steps
-- Use run_time to control pacing
-- Position objects within visible range: x [-6, 6], y [-3.5, 3.5]
-- For rotations, reference point matters: use "about_point" if needed
-
-Now, respond to user requests with only the JSON specification.
+Output JSON only.
 `;
  
 
@@ -594,19 +568,19 @@ app.post("/api/chat", async (req,res) => {
     try {
         switch(ftype){
           case 1:
-            SP=SYSTEM_PROMPT1;
+            SP=SYSTEM_PROMPT2D;
             break;
           case 2:
-            SP=SYSTEM_PROMPT2;
+            SP=SYSTEM_PROMPT3D;
             break;
           case 3:
-            SP=SYSTEM_PROMPT3;
+            SP=SYSTEM_PROMPT_ANIMATE;
             break;
           case 4:
             SP=QUIZ_PROMPT;
             break;
           case 5:
-            SP=SYSTEM_PROMPT5;
+            SP=SYSTEM_PROMPT_MANIM;
         }
         const result = await model.generateContent(`${SP}\nUser: ${InPrompt}`);
         const raw_text = result.response.text();
