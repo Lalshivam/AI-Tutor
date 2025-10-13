@@ -6,7 +6,8 @@
   "type": "module",
   "scripts": {
     "dev": "nodemon server.ts",
-    "start": "ts-node server.ts",
+    "start": "cross-env NODE_ENV=production ts-node server.ts",
+    "build": "tsc",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "Shivam Kumar Lal",
@@ -18,7 +19,8 @@
     "express": "^5.1.0",
     "mathjs": "^14.7.0",
     "nerdamer": "^1.1.13",
-    "react-katex": "^3.1.0"
+    "react-katex": "^3.1.0",
+    "serve": "^14.2.5"
   },
   "devDependencies": {
     "@types/cors": "^2.8.19",

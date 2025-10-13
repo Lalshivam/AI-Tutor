@@ -5,7 +5,7 @@ import GeometryBoard from "./components/GeometryBoard";
 import Math3D from "./components/Math3D";
 import MessageBubble from './components/MessageBubble';
 
-import { BlockMath, InlineMath } from 'react-katex';
+import { BlockMath} from 'react-katex';
 import 'katex/dist/katex.min.css'; // Make sure to import the KaTeX styles
 
 
@@ -75,9 +75,9 @@ export default function App() {
 
 
   // Dropdown handler to change the plot type
-  function handlePlotTypeChange(e: React.ChangeEvent<HTMLSelectElement>) {
-    setPlotType(e.target.value);
-  }
+  // function handlePlotTypeChange(e: React.ChangeEvent<HTMLSelectElement>) {
+  //   setPlotType(e.target.value);
+  // }
 
   return (
     <div>
