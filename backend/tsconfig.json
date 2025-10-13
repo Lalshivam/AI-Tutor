@@ -6,7 +6,7 @@
     
     //for deployment
     "outDir": "./dist",
-    "moduleResolution": "node",
+    // "moduleResolution": "NodeNext",
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
 
