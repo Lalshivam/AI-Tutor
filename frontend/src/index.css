@@ -177,7 +177,8 @@ body {
 .ai-plot {
   flex: 2 1 400px;
   min-width: 300px;
-  height: 400px;
+  height: 350px;
+  border-radius: 10px;
 }
 
 /* Header Styling */

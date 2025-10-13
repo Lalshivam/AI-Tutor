@@ -4,6 +4,7 @@ import FunctionPlots from "./components/FunctionPlot";
 import GeometryBoard from "./components/GeometryBoard";
 import Math3D from "./components/Math3D";
 import MessageBubble from './components/MessageBubble';
+import { postChat } from './api';
 
 import { BlockMath} from 'react-katex';
 import 'katex/dist/katex.min.css'; // Make sure to import the KaTeX styles
@@ -16,12 +17,7 @@ export default function App() {
 
   // Function to send the input to the backend and receive a response
   async function handleSend() {
-    const res = await fetch('http://localhost:3001/api/chat', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message: input, plotType }),
-    });
-    const data = await res.json();
+    const data = await postChat({ message: input, plotType });
     setMessages([
       ...messages,
       { role: 'user', content: input },
