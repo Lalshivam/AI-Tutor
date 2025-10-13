@@ -17,14 +17,16 @@ export default function GeometryBoard({ config }) {
     // if (boardRef.current) {
     //   JXG.JSXGraph.freeBoard(boardRef.current);
     // }
-    boxRef.current.setAttribute("id", "jxg-box");
-    // Init new board
-    const brd = JXG.JSXGraph.initBoard("jxg-box", {
+    const brd = JXG.JSXGraph.initBoard(boxRef.current, {
       boundingbox: [-5, 5, 5, -5],
       axis: true,
-      width:300,
-      height:300
+      showCopyright: false,
+      defaultAxes: {
+        x: { strokeColor: "white" },
+        y: { strokeColor: "white" },
+      },
     });
+
     boardRef.current = brd;
 
     const points = {};
@@ -146,15 +148,6 @@ config.derived?.forEach(d => {
         });
       }
     });
-    // 5. Create text annotations
-    config.texts?.forEach(t => {
-      brd.create("text", [t.coords[0], t.coords[1], t.text], { 
-        fontSize: 14,
-        fontWeight: 'normal',
-        color: '#333333'
-      });
-    });
-    
 
     // 6. Create circles
     config.circles?.forEach(c => {
@@ -185,7 +178,130 @@ config.derived?.forEach(d => {
       }
     });
 
+        // 7. Create ellipses
+    config.ellipses?.forEach(e => {
+      const centerPoint = points[e.center];
+      const focus1 = points[e.focus1];
+      const focus2 = points[e.focus2];
+      
+      if (e.a && e.b && centerPoint) {
+        // Ellipse with semi-major and semi-minor axes
+        const center = [centerPoint.X(), centerPoint.Y()];
+        const aPt = [centerPoint.X() + e.a, centerPoint.Y()];
+        const bPt = [centerPoint.X(), centerPoint.Y() + e.b]; 
+        const mirrorAPt = [centerPoint.X() - e.a, centerPoint.Y()];
+        const mirrorBPt = [centerPoint.X(), centerPoint.Y() - e.b];
 
+        brd.create("ellipse", [aPt, mirrorAPt, bPt], {
+          strokeColor: e.color || '#cc0066',
+          strokeWidth: 2,
+          dash: e.style === 'dashed' ? 2 : 0
+        });
+      } else if (focus1 && focus2 && e.thirdPoint) {
+        // Ellipse defined by two foci and a third point
+        const thirdPt = points[e.thirdPoint];
+        if (thirdPt) {
+          brd.create("ellipse", [focus1, focus2, thirdPt], {
+            strokeColor: e.color || '#cc0066',
+            strokeWidth: 2,
+            dash: e.style === 'dashed' ? 2 : 0
+          });
+        }
+      }
+    });
+
+    // 8. Create parabolas
+    config.parabolas?.forEach(p => {
+      const focus = points[p.focus];
+      const directrixLine = lines[p.directrix];
+      
+      if (focus && directrixLine) {
+        brd.create("parabola", [focus, directrixLine], {
+          strokeColor: p.color || '#9900cc',
+          strokeWidth: 2,
+          dash: p.style === 'dashed' ? 2 : 0
+        });
+      }
+    });
+
+    // 9. Create hyperbolas
+    config.hyperbolas?.forEach(h => {
+      const focus1 = points[h.focus1];
+      const focus2 = points[h.focus2];
+      const thirdPt = points[h.thirdPoint];
+      
+      if (focus1 && focus2 && thirdPt) {
+        brd.create("hyperbola", [focus1, focus2, thirdPt], {
+          strokeColor: h.color || '#cc6600',
+          strokeWidth: 2,
+          dash: h.style === 'dashed' ? 2 : 0
+        });
+      }
+    });
+
+    // 10. Create angles
+    config.angles?.forEach(a => {
+      const pt1 = points[a.points[0]];
+      const vertex = points[a.points[1]];
+      const pt2 = points[a.points[2]];
+      
+      if (pt1 && vertex && pt2) {
+        brd.create("angle", [pt1, vertex, pt2], {
+          radius: a.radius || 0.5,
+          strokeColor: a.color || '#00cc66',
+          fillColor: a.fillColor || '#00cc66',
+          fillOpacity: 0.3,
+          name: a.label || ''
+        });
+      }
+    });
+
+    // 11. Create arcs
+    config.arcs?.forEach(a => {
+      const center = points[a.center];
+      const start = points[a.start];
+      const end = points[a.end];
+      
+      if (center && start && end) {
+        brd.create("arc", [center, start, end], {
+          strokeColor: a.color || '#0066cc',
+          strokeWidth: 2,
+          dash: a.style === 'dashed' ? 2 : 0
+        });
+      }
+    });
+
+    // 12. Create function plots
+    config.functions?.forEach(f => {
+      brd.create("functiongraph", [f.expression, f.xMin || -5, f.xMax || 5], {
+        strokeColor: f.color || '#cc0099',
+        strokeWidth: 2,
+        dash: f.style === 'dashed' ? 2 : 0
+      });
+    });
+
+    // 13. Create vectors (arrows)
+    config.vectors?.forEach(v => {
+      const start = points[v.from];
+      const end = points[v.to];
+      
+      if (start && end) {
+        brd.create("arrow", [start, end], {
+          strokeColor: v.color || '#cc3300',
+          strokeWidth: 2,
+          lastArrow: { type: 2, size: 6 }
+        });
+      }
+    });
+
+    // 14. Create parametric curves
+    config.parametricCurves?.forEach(c => {
+      brd.create("curve", [c.xExpression, c.yExpression, c.tMin || 0, c.tMax || 2 * Math.PI], {
+        strokeColor: c.color || '#00cccc',
+        strokeWidth: 2,
+        dash: c.style === 'dashed' ? 2 : 0
+      });
+    });
 
     // Auto-zoom to fit all elements
     brd.resizeContainer(500, 500);

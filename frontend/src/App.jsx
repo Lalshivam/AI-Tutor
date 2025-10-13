@@ -19,9 +19,8 @@ function App() {
   { label: "2D Visual", value: 1 },
   { label: "3D Visual", value: 2 },
   { label: "2D Animation", value: 3 },
-  { label: "Function Plots", value: 4 },
-  { label: "Prepare Quiz", value: 5 },
-  { label: "Video Generation", value:6}
+  { label: "Prepare Quiz", value: 4 },
+  { label: "Video Generation", value:5}
   ];
 
   const send = async() => {
@@ -146,5 +145,4 @@ function App() {
   );
 }
 export default App;
-
  

@@ -14,9 +14,8 @@ export default function MessagesList({ messages }){
         1: GeometryBoard,
         2: Math3D,
         3: Animate,
-        4: FunctionPlots,
-        5: Quiz,
-        6: VideoGen
+        4: Quiz,
+        5: VideoGen
     };
     return (
     <div className="messages">
@@ -27,7 +26,7 @@ export default function MessagesList({ messages }){
         if (msg.sender === "user") {
              return <div key={i} className="message user">{msg.text}</div>;
         }
-        if (msg.type===5){
+        if (msg.type===4){
             return <div key={i}><Quiz config={msg.graph}/></div>;
         }
         if (msg.type !== null) {
