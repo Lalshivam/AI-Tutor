@@ -1,70 +1,211 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
 
-
+/* Ensure the full screen is scrollable, and bottom bar stays fixed */
 body {
   font-family: sans-serif;
   background: linear-gradient(135deg, #343541 0%, #444654 100%);
   color: #ececf1;
-  min-height: 100vh;
   margin: 0;
+  padding: 0;
+  height: 100vh;
+  overflow: auto;
 }
 
-/* The wrapper for both input and button */
-.input-wrapper {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  width: 100%;
-  max-width: 600px; /* Set your preferred width */
-  margin: 0 auto;
-  border-radius: 12px;
-  overflow: hidden;
+/* Wrapper that fixes the search bar at the bottom */
+.search-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
   background-color: #444654;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  padding: 16px;
+  border-top: 1px solid #2e2e38;
+  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.3);
+  z-index: 999;
 }
 
-/* Input field style */
+/* Input Field */
 .input-field {
   flex: 1;
+  max-width: 600px;
   padding: 12px 16px;
   font-size: 1rem;
   color: white;
   background-color: #343541;
   border: none;
   outline: none;
-  border-radius: 12px 0 0 12px; /* Left border radius */
-  transition: all 0.3s ease-in-out;
+  border-radius: 8px;
 }
 
 .input-field::placeholder {
-  color: #b4bcd0; /* Light placeholder color */
+  color: #b4bcd0;
 }
 
 .input-field:focus {
-  border: 2px solid #4d8fd5; /* Blue focus border */
-  background-color: #2e3138;
+  outline: 2px solid #4d8fd5;
+  background-color: #2e2e38;
 }
 
-/* Button style */
-.submit-button {
+.content-area {
+  padding-bottom: 100px; /* So content doesn't hide behind search bar */
+}
+/* Container for search bar - floating, centered, partial width */
+.search-bar-modern {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #2e2f3a;
+  border-radius: 12px;
   padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+  width: 90%;
+  max-width: 800px;
+  z-index: 1000;
+}
+
+/* Input field */
+.input-field-modern {
+  flex: 1;
+  padding: 12px 16px;
+  font-size: 1rem;
+  color: white;
+  background-color: #343541;
+  border: none;
+  border-radius: 8px;
+  outline: none;
+}
+
+.input-field-modern::placeholder {
+  color: #b4bcd0;
+}
+
+.input-field-modern:focus {
+  outline: 2px solid #4d8fd5;
+}
+
+/* Plot type buttons container */
+.plot-buttons {
+  display: flex;
+  gap: 6px;
+}
+
+/* Individual plot type button */
+.plot-button {
+  padding: 10px 12px;
+  background-color: #444654;
+  border: none;
+  color: white;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+}
+
+.plot-button:hover {
+  background-color: #55576b;
+}
+
+.plot-button.active {
+  background-color: #4d8fd5;
+  font-weight: bold;
+}
+
+/* Send button */
+.submit-button-modern {
+  padding: 10px 16px;
   background-color: #4d8fd5;
   color: white;
-  font-size: 1rem;
   border: none;
+  border-radius: 8px;
+  font-size: 1rem;
   cursor: pointer;
-  border-radius: 0 12px 12px 0; /* Right border radius */
   transition: background-color 0.3s ease;
 }
 
-.submit-button:hover {
+.submit-button-modern:hover {
   background-color: #3c7fb1;
 }
 
-.submit-button:focus {
-  outline: none;
-  box-shadow: 0 0 0 2px #4d8fd5;
+/* Style for user input messages */
+.user-question {
+  margin: 16px 0;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.user-bubble {
+  background-color: #4d8fd5;
+  padding: 12px 16px;
+  border-radius: 12px;
+  max-width: 60%;
+  color: white;
+  font-size: 1rem;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+/* AI response block */
+.ai-response {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  margin: 24px 0;
+  background-color: #2e2f3a;
+  padding: 20px;
+  border-radius: 16px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
+}
+
+/* AI explanation text */
+.ai-content {
+  flex: 1 1 300px;
+  min-width: 280px;
+}
+
+.ai-math {
+  margin-bottom: 12px;
+  font-size: 1.1rem;
+}
+
+/* AI plot side */
+.ai-plot {
+  flex: 2 1 400px;
+  min-width: 300px;
+  height: 400px;
+}
+
+/* Header Styling */
+header {
+  background-color: #202123;
+  padding: 20px;
+  text-align: center;
+  border-bottom: 1px solid #333;
+}
+
+header h1 {
+  font-size: 2rem;
+  color: #ffffff;
+  margin: 0;
+  font-weight: bold;
+}
+
+/* Footer Styling */
+footer {
+  background-color: #202123;
+  color: #888;
+  text-align: center;
+  padding: 12px 0;
+  font-size: 0.9rem;
+  border-top: 1px solid #333;
+  position: fixed;
+  bottom: 0;
+  width: 100%;
 }
 
 

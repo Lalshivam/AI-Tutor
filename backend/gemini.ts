@@ -4,7 +4,7 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
 console.log('GEMINI_API_KEY:', process.env.GEMINI_API_KEY);
 
 export async function explainWithGemini(message: string, mathResult: any, plotType: string) {
-  const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+  const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
 
   // Create a different prompt based on plotType (3D vs 2D)
   let prompt = `
@@ -15,43 +15,112 @@ export async function explainWithGemini(message: string, mathResult: any, plotTy
 
   The "config" object MUST match one of these schemas:
 
-  **For 3D plots:**
-  {
-    "surfaces": [
-      { "expression": string, "xrange": [number, number], "yrange": [number, number], "steps": number, "colorscale"?: string }
-    ],
-    "curves": [
-      { "parametric": { "x": string, "y": string, "z": string }, "trange": [number, number, number], "color"?: string }
-    ]
-  }
+**For 3D plots:**
 
-  **For 2D function plots:**
-  {
-    "functions": [
-      { "expression": string, "range": [number, number], "color"?: string }
-    ]
-  }
+{
+  "surfaces": [
+    {
+      "expression": string,
+      "xrange": [number, number],
+      "yrange": [number, number],
+      "steps": number,
+      "colorscale"?: string,
+      "opacity"?: number,           // 0 to 1 for transparency
+      "wireframe"?: boolean         // true to show wireframe overlay
+    }
+  ],
+  "curves": [
+    {
+      "parametric": { "x": string, "y": string, "z": string },
+      "trange": [number, number, number],
+      "color"?: string,
+      "linewidth"?: number          // thickness of curve line
+    }
+  ],
+  "vectorFields"?: [               // Advanced: 3D vector fields (optional)
+    {
+      "vector": { "x": string, "y": string, "z": string },
+      "domain": {
+        "xrange": [number, number],
+        "yrange": [number, number],
+        "zrange": [number, number]
+      },
+      "density": number            // number of vectors per unit volume
+    }
+  ]
+}
 
-  **For geometry diagrams:**
-  {
-    "points": [
-      { "label": string, "coords": [number, number] }
-    ],
-    "segments"?: [
-      { "from": string, "to": string, "style"?: "solid"|"dashed", "color"?: string }
-    ],
-    "circles"?: [
-      { "center": string, "radius": number, "color"?: string }
-    ]
-  }
+**For 2D function plots:**
+
+{
+  "functions": [
+    {
+      "expression": string,
+      "range": [number, number],
+      "color"?: string,
+      "linewidth"?: number,        // thickness of curve line
+      "style"?: "solid"|"dashed"|"dotted"   // line style
+    }
+  ],
+  "implicitCurves"?: [             // Advanced: implicit equations like circles, ellipses, etc.
+    {
+      "expression": string,
+      "range": [[number, number], [number, number]],  // x and y ranges
+      "color"?: string
+    }
+  ]
+}
+
+**For geometry diagrams:**
+
+{
+  "points": [
+    { "label": string, "coords": [number, number], "color"?: string, "size"?: number }
+  ],
+  "segments"?: [
+    { "from": string, "to": string, "style"?: "solid"|"dashed", "color"?: string, "linewidth"?: number }
+  ],
+  "circles"?: [
+    { "center": string, "radius": number, "color"?: string, "fill"?: boolean, "fillColor"?: string }
+  ],
+  "polygons"?: [                 // Advanced: polygons defined by point labels
+    {
+      "vertices": [string],      // list of point labels in order
+      "color"?: string,
+      "fill"?: boolean,
+      "fillColor"?: string,
+      "linewidth"?: number
+    }
+  ],
+  "angles"?: [                   // Angle annotations between three points (A-B-C)
+    {
+      "points": [string, string, string],
+      "label"?: string,
+      "color"?: string
+    }
+  ],
+  "annotations"?: [              // Additional textual annotations anywhere
+    {
+      "position": [number, number],
+      "text": string,
+      "color"?: string,
+      "fontsize"?: number
+    }
+  ]
+}
+
 
   **Rules:**
-  - Do NOT include any explanation or text outside the JSON object.
-  - For function plots, each function must have "expression" and "range".
-  - For geometry, use only "points", "segments", and "circles" as shown.
-  - For 3D, use only "surfaces" and "curves" as shown.
-  - Always include "xrange" and "yrange" for every surface in 3D plots.
-  - If no diagram is needed, set "config": null.
+  - Respond ONLY with a valid **strict JSON** object — not markdown, text, or code fences.
+  - All values must be JSON literals: no variables, no expressions like "2 * Math.PI" or "Math.PI".
+  - Pre-calculate values like \`2 * Math.PI\` as \`6.2831853\` directly.
+  - DO NOT include LaTeX or math formatting inside "config". Use plain numbers and strings.
+  - Do NOT wrap the response in code blocks (e.g., \`\`\`json).
+  - If a plot is not needed, set "config": null.
+  - For function plots, each function must have "expression" and "range" (with literal numbers).
+  - For geometry, use only "points", "segments", and "circles".
+  - For 3D, use only "surfaces" and "curves". All numeric ranges must be literal numbers.
+  - Ensure every object, array, and value is syntactically correct and JSON-parsable.
 
   User: ${message}
   Math steps: ${JSON.stringify(mathResult.latexSteps)}

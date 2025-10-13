@@ -5,46 +5,113 @@ import { useEffect, useRef } from "react";
 import JXG from "jsxgraph";
 import "../../node_modules/jsxgraph/distrib/jsxgraph.css";
 
-// Component to create a geometry board
 export default function GeometryBoard({ config }: { config: any }) {
   const boxRef = useRef<HTMLDivElement>(null);
   const boardRef = useRef<any>(null);
 
   useEffect(() => {
     if (!boxRef.current) return;
+
+    // Destroy previous board if exists
     if (boardRef.current) JXG.JSXGraph.freeBoard(boardRef.current);
+
     const brd = JXG.JSXGraph.initBoard(boxRef.current, {
       boundingbox: [-5, 5, 5, -5],
       axis: true,
     });
     boardRef.current = brd;
 
-    // Draw points, segments, and circles
+    const pointsMap: Record<string, any> = {};
+
+    // ✅ Create points and store references
     if (config.points) {
       config.points.forEach((point: any) => {
-        brd.create("point", point.coords, { name: point.label });
+        const p = brd.create("point", point.coords, { name: point.label });
+        pointsMap[point.label] = p;
       });
     }
 
+    // ✅ Create segments using point references
     if (config.segments) {
       config.segments.forEach((segment: any) => {
-        brd.create("line", [
-          brd.objects[segment.from], brd.objects[segment.to]
-        ], { strokeColor: segment.color });
+        const from = pointsMap[segment.from];
+        const to = pointsMap[segment.to];
+
+        if (from && to) {
+          brd.create("segment", [from, to], {
+            strokeColor: segment.color || "black",
+            dash: segment.style === "dashed" ? 2 : 0,
+          });
+        } else {
+          console.warn(`Missing point(s): ${segment.from}, ${segment.to}`);
+        }
       });
     }
 
+    // ✅ Create circles
     if (config.circles) {
       config.circles.forEach((circle: any) => {
-        brd.create("circle", [
-          brd.objects[circle.center], circle.radius
-        ], { strokeColor: circle.color });
+        const center = pointsMap[circle.center];
+        if (center) {
+          brd.create("circle", [center, circle.radius], {
+            strokeColor: circle.color || "black",
+          });
+        } else {
+          console.warn(`Missing center point: ${circle.center}`);
+        }
       });
     }
   }, [config]);
 
   return <div ref={boxRef} style={{ width: "500px", height: "500px" }} />;
 }
+
+
+
+// import { useEffect, useRef } from "react";
+// import JXG from "jsxgraph";
+// import "../../node_modules/jsxgraph/distrib/jsxgraph.css";
+
+// // Component to create a geometry board
+// export default function GeometryBoard({ config }: { config: any }) {
+//   const boxRef = useRef<HTMLDivElement>(null);
+//   const boardRef = useRef<any>(null);
+
+//   useEffect(() => {
+//     if (!boxRef.current) return;
+//     if (boardRef.current) JXG.JSXGraph.freeBoard(boardRef.current);
+//     const brd = JXG.JSXGraph.initBoard(boxRef.current, {
+//       boundingbox: [-5, 5, 5, -5],
+//       axis: true,
+//     });
+//     boardRef.current = brd;
+
+//     // Draw points, segments, and circles
+//     if (config.points) {
+//       config.points.forEach((point: any) => {
+//         brd.create("point", point.coords, { name: point.label });
+//       });
+//     }
+
+//     if (config.segments) {
+//       config.segments.forEach((segment: any) => {
+//         brd.create("line", [
+//           brd.objects[segment.from], brd.objects[segment.to]
+//         ], { strokeColor: segment.color });
+//       });
+//     }
+
+//     if (config.circles) {
+//       config.circles.forEach((circle: any) => {
+//         brd.create("circle", [
+//           brd.objects[circle.center], circle.radius
+//         ], { strokeColor: circle.color });
+//       });
+//     }
+//   }, [config]);
+
+//   return <div ref={boxRef} style={{ width: "500px", height: "500px" }} />;
+// }
 
 
 // import { useEffect, useRef } from "react";
