@@ -23,7 +23,7 @@ export default function GeometryBoard({ config }: { config: any }) {
 
     const pointsMap: Record<string, any> = {};
 
-    // ✅ Create points and store references
+    //  Create points and store references
     if (config.points) {
       config.points.forEach((point: any) => {
         const p = brd.create("point", point.coords, { name: point.label });
@@ -31,7 +31,7 @@ export default function GeometryBoard({ config }: { config: any }) {
       });
     }
 
-    // ✅ Create segments using point references
+    //  Create segments using point references
     if (config.segments) {
       config.segments.forEach((segment: any) => {
         const from = pointsMap[segment.from];
@@ -48,7 +48,7 @@ export default function GeometryBoard({ config }: { config: any }) {
       });
     }
 
-    // ✅ Create circles
+    //  Create circles
     if (config.circles) {
       config.circles.forEach((circle: any) => {
         const center = pointsMap[circle.center];
@@ -61,109 +61,63 @@ export default function GeometryBoard({ config }: { config: any }) {
         }
       });
     }
+
+    //  Create angles
+    if (config.angles) {
+      config.angles.forEach((a: any) => {
+        // Preferred: angle using three labeled points [A, B, C] for ∠ABC
+        if (Array.isArray(a.points)) {
+          const [p1, p2, p3] = a.points;
+          const A = pointsMap[p1];
+          const B = pointsMap[p2]; // vertex
+          const C = pointsMap[p3];
+          if (A && B && C) {
+            brd.create("angle", [A, B, C], {
+              radius: a.radius ?? 1,
+              strokeColor: a.color || "#00cc66",
+              fillColor: a.fillColor || "#00cc66",
+              fillOpacity: a.fillOpacity ?? 0.3,
+              name: a.label || "",
+            });
+          } else {
+            console.warn("Missing points for angle:", a.points);
+          }
+          return;
+        }
+
+        // Optional fallback: degree-based angle at a vertex (or origin) like your snippet
+        if (typeof a.degree === "number") {
+          const center =
+            (a.vertex && pointsMap[a.vertex]) || brd.create("point", [0, 0], { visible: false });
+          const r = a.radius || 1;
+          const start = brd.create("point", [center.X() + r, center.Y()], { visible: false });
+          const angleRad = (a.degree * Math.PI) / 180;
+          const end = brd.create(
+            "point",
+            [center.X() + r * Math.cos(angleRad), center.Y() + r * Math.sin(angleRad)],
+            { visible: false }
+          );
+          brd.create("angle", [start, center, end], {
+            radius: r,
+            strokeColor: a.color || "#00cc66",
+            fillColor: a.fillColor || "#00cc66",
+            fillOpacity: a.fillOpacity ?? 0.3,
+            name: a.label || "",
+          });
+          return;
+        }
+
+        console.warn("Angle config not recognized:", a);
+      });
+    }
+
+
+
   }, [config]);
+
+
+
 
   return <div ref={boxRef} style={{ width: "500px", height: "500px" }} />;
 }
 
-
-
-// import { useEffect, useRef } from "react";
-// import JXG from "jsxgraph";
-// import "../../node_modules/jsxgraph/distrib/jsxgraph.css";
-
-// // Component to create a geometry board
-// export default function GeometryBoard({ config }: { config: any }) {
-//   const boxRef = useRef<HTMLDivElement>(null);
-//   const boardRef = useRef<any>(null);
-
-//   useEffect(() => {
-//     if (!boxRef.current) return;
-//     if (boardRef.current) JXG.JSXGraph.freeBoard(boardRef.current);
-//     const brd = JXG.JSXGraph.initBoard(boxRef.current, {
-//       boundingbox: [-5, 5, 5, -5],
-//       axis: true,
-//     });
-//     boardRef.current = brd;
-
-//     // Draw points, segments, and circles
-//     if (config.points) {
-//       config.points.forEach((point: any) => {
-//         brd.create("point", point.coords, { name: point.label });
-//       });
-//     }
-
-//     if (config.segments) {
-//       config.segments.forEach((segment: any) => {
-//         brd.create("line", [
-//           brd.objects[segment.from], brd.objects[segment.to]
-//         ], { strokeColor: segment.color });
-//       });
-//     }
-
-//     if (config.circles) {
-//       config.circles.forEach((circle: any) => {
-//         brd.create("circle", [
-//           brd.objects[circle.center], circle.radius
-//         ], { strokeColor: circle.color });
-//       });
-//     }
-//   }, [config]);
-
-//   return <div ref={boxRef} style={{ width: "500px", height: "500px" }} />;
-// }
-
-
-// import { useEffect, useRef } from "react";
-// import JXG from "jsxgraph";
-// import "../../node_modules/jsxgraph/distrib/jsxgraph.css";
-
-// export default function GeometryBoard({ config }: { config: any }) {
-//   const boxRef = useRef<HTMLDivElement>(null);
-//   const boardRef = useRef<any>(null);
-
-//   useEffect(() => {
-//     if (!boxRef.current || !config) return;
-//     if (boardRef.current) JXG.JSXGraph.freeBoard(boardRef.current);
-//     const brd = JXG.JSXGraph.initBoard(boxRef.current, {
-//       boundingbox: [-2, 10, 10, -2],
-//       axis: true,
-//     });
-//     boardRef.current = brd;
-
-//     const points: Record<string, any> = {};
-//     config.points?.forEach((p: any) => {
-//       points[p.label] = brd.create("point", p.coords, {
-//         name: p.label,
-//         size: 3,
-//         strokeColor: "#0066cc",
-//         fillColor: "#0066cc",
-//       });
-//     });
-
-//     config.segments?.forEach((s: any) => {
-//       const from = points[s.from];
-//       const to = points[s.to];
-//       if (from && to) {
-//         brd.create("segment", [from, to], {
-//           strokeColor: s.color || "#333",
-//           dash: s.style === "dashed" ? 2 : 0,
-//         });
-//       }
-//     });
-
-//     config.circles?.forEach((c: any) => {
-//       const center = points[c.center];
-//       if (center && c.radius) {
-//         brd.create("circle", [center, c.radius], {
-//           strokeColor: c.color || "#0066cc",
-//           dash: c.style === "dashed" ? 2 : 0,
-//         });
-//       }
-//     });
-
-//     // Add more as needed (derived points, fills, etc.)
-//   }, [config]);
-
-//   return <div ref={boxRef} style={{ width: "500px", height: "500px" }} />;
-// }
