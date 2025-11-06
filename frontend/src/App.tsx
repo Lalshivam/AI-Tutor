@@ -88,7 +88,7 @@ export default function App() {
   return (
     <div>
       <header>
-        <h1 style={{ fontSize: '2rem', fontWeight: 'bold', color: '#409adfff' }}>MATH TUTOR WITH VISUALIZATIONS</h1>
+        <h1 style={{ fontSize: '2rem', fontWeight: 'bold', color: '#409adfff' }}>MATh_VIS</h1>
       </header>
 
       <main className="content-area">
@@ -138,13 +138,25 @@ export default function App() {
           />
 
           <div className="plot-buttons">
-            <button type="button" onClick={() => setPlotType('2D')} className={`plot-button ${plotType === '2D' ? 'active' : ''}`}>
+            <button 
+            type="button" 
+            title="Supports: functions, implicit curves, parametric 2D"
+            onClick={() => setPlotType('2D')} 
+            className={`plot-button ${plotType === '2D' ? 'active' : ''}`}>
               2D
             </button>
-            <button type="button" onClick={() => setPlotType('3D')} className={`plot-button ${plotType === '3D' ? 'active' : ''}`}>
+            <button 
+            type="button"
+            title="Supports: surfaces, curves" 
+            onClick={() => setPlotType('3D')} 
+            className={`plot-button ${plotType === '3D' ? 'active' : ''}`}>
               3D
             </button>
-            <button type="button" onClick={() => setPlotType('Geometry')} className={`plot-button ${plotType === 'Geometry' ? 'active' : ''}`}>
+            <button 
+            type="button"
+            title="Supports: points, segments, circles, angles" 
+            onClick={() => setPlotType('Geometry')} 
+            className={`plot-button ${plotType === 'Geometry' ? 'active' : ''}`}>
               Geometry
             </button>
           </div>

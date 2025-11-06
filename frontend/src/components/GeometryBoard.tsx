@@ -118,6 +118,6 @@ export default function GeometryBoard({ config }: { config: any }) {
 
 
 
-  return <div ref={boxRef} style={{ width: "500px", height: "500px" }} />;
+  return <div ref={boxRef} style={{ width: "100%", height: "100%" }} />;
 }
 

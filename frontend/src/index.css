@@ -2,7 +2,9 @@
 /* Ensure the full screen is scrollable, and bottom bar stays fixed */
 body {
   font-family: sans-serif;
-  background: linear-gradient(135deg, #343541 0%, #444654 100%);
+  background: 
+  url('/bgImage.jpg') center center / cover no-repeat fixed;
+  /* linear-gradient(135deg, #343541 0%, #444654 100%), */
   color: #ececf1;
   margin: 0;
   padding: 0;
@@ -175,10 +177,21 @@ body {
 
 /* AI plot side */
 .ai-plot {
-  flex: 2 1 400px;
-  min-width: 300px;
-  height: 350px;
+  max-width: 900px;          /* optional: keep it narrower than chat width */
+  max-height: 340px;         /* limit height so it won’t cover following messages */
+  overflow: auto;            /* scroll if content exceeds the box */
+  margin: 12px auto;         /* center in column */
+  padding: 8px;
+  background: rgba(0,0,0,0.18);
+  border: 1px solid rgba(255,255,255,0.08);
   border-radius: 10px;
+}
+
+/* Make common render targets fit inside the box */
+.ai-plot canvas,
+.ai-plot svg,
+.ai-plot > div {
+  max-width: 100%;
 }
 
 /* Header Styling */
