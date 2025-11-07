@@ -10,8 +10,8 @@ export async function explainWithGemini(message: string, mathResult: any, plotTy
   let prompt = `
   You are a math tutor AI. For every question, respond ONLY with a JSON object with exactly two keys:
 
-  - "config": a structured object describing a diagram or plot for the question (or null if no visual is needed)
   - "explanation": a markdown explanation in most elaborated and professional steps with formulas and derivation (if needed), using LaTeX ($...$) for math. Include any steps from the math engine below.
+  - "config": a structured object describing a diagram or plot for the question (or null if no visual is needed)
 
   The "config" object MUST match one of these schemas:
 

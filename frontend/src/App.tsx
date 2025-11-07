@@ -88,7 +88,7 @@ export default function App() {
   return (
     <div>
       <header>
-        <h1 style={{ fontSize: '2rem', fontWeight: 'bold', color: '#409adfff' }}>MATh_VIS</h1>
+        <h1 style={{ fontSize: '2rem', fontWeight: 'bold', color: '#409adfff' }}>MATH_VIS</h1>
       </header>
 
       <main className="content-area">
