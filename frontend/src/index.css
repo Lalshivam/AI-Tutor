@@ -177,14 +177,31 @@ body {
 
 /* AI plot side */
 .ai-plot {
-  max-width: 900px;          /* optional: keep it narrower than chat width */
-  max-height: 340px;         /* limit height so it won’t cover following messages */
-  overflow: auto;            /* scroll if content exceeds the box */
-  margin: 12px auto;         /* center in column */
+  position: relative;
+  width: clamp(320px, 60vw, 700px);  /* bigger */
+  aspect-ratio: 1 / 0.6;               /* square */
+  overflow: hidden;
+
+  margin: 12px auto;
   padding: 8px;
-  background: rgba(0,0,0,0.18);
-  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(0, 0, 0, 0.18);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 10px;
+}
+
+/* Plot should fill the square */
+.ai-plot .jxgbox,
+.ai-plot > div {
+  width: 100% !important;
+  height: 100% !important;
+  max-width: 100%;
+}
+
+@media (max-width: 640px) {
+  .ai-plot .jxgbox,
+  .ai-plot > div {
+    height: 240px !important;
+  }
 }
 
 /* Make common render targets fit inside the box */

@@ -18,6 +18,7 @@ export default function GeometryBoard({ config }: { config: any }) {
     const brd = JXG.JSXGraph.initBoard(boxRef.current, {
       boundingbox: [-5, 5, 5, -5],
       axis: true,
+ 
     });
     boardRef.current = brd;
 
