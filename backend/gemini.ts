@@ -68,12 +68,7 @@ export async function explainWithGemini(message: string, mathResult: any, plotTy
       "range": [[number, number], [number, number]],  // x and y ranges
       "color"?: string
     }
-  ]
-}
-
-**For geometry diagrams:**
-
-{
+  ],
   "points": [
     { "label": string, "coords": [number, number], "color"?: string, "size"?: number }
   ],
@@ -110,6 +105,7 @@ export async function explainWithGemini(message: string, mathResult: any, plotTy
 }
 
 
+
   **Rules:**
   - RESPONSE FORMAT:
     Always return a JSON object with exactly two keys:
@@ -122,9 +118,9 @@ export async function explainWithGemini(message: string, mathResult: any, plotTy
   - Pre-calculate values like \`2 * Math.PI\` as \`6.2831853\` directly.
   - DO NOT include LaTeX or math formatting inside "config". Use plain numbers and strings.
   - Do NOT wrap the response in code blocks (e.g., \`\`\`json).
-  - If a plot is not needed, set "config": null.
+  - Prefer returning a diagram whenever it aids understanding; NEVER set "config": null, if no diagram is needed try adding some visually applealing plots.
   - For function plots, each function must have "expression" and "range" (with literal numbers).
-  - For geometry, use only "points", "segments", and "circles".
+  - Always use numeric literals in ranges and expressions.
   - For 3D, use only "surfaces" and "curves". All numeric ranges must be literal numbers.
   - Ensure every object, array, and value is syntactically correct and JSON-parsable.
 
@@ -155,13 +151,17 @@ export async function explainWithGemini(message: string, mathResult: any, plotTy
   } else if (plotType === '2D') {
     // Handle 2D plot type
     prompt += `
-    For 2D function plots, please return only functions as follows:
+    For 2D, choose the most suitable visualization:
+    - Use "functions" for y=f(x) graphs.
+    - Use "implicitCurves" for circles/ellipses/equations in x and y.
+    - Use geometry ("points","segments","circles","polygons","angles","annotations") for Euclidean constructions (e.g., triangles, angles).
+    Always use numeric literals. If a plot is not needed, set "config": null.
+    Example:
     {
-      "functions": [
-        { "expression": "sin(x)", "range": [-6, 6], "color": "blue" }
-      ]
-    }
-    `;
+      "functions": [{ "expression": "sin(x)", "range": [-6, 6], "color": "blue" }],
+      "points": [{ "label": "A", "coords": [0,0] }, { "label": "B", "coords": [4,0] }],
+      "segments": [{ "from": "A", "to": "B" }]
+    }`;
   }
 
   try {

@@ -1,73 +1,214 @@
 // for 2D function plots with sliders, using JSXGraph 
 // // frontend/src/components/FunctionPlot.tsx
 
-import { useEffect, useRef } from "react";
-import JXG from "jsxgraph";
-import "../../node_modules/jsxgraph/distrib/jsxgraph.css";
+// import { useEffect, useRef } from "react";
+// import JXG from "jsxgraph";
+// import "../../node_modules/jsxgraph/distrib/jsxgraph.css";
 
-interface SliderConfig {
-  label: string;
-  min: number;
-  max: number;
-  initial: number;
-  position?: [[number, number], [number, number], [number, number]];
-}
+// interface SliderConfig {
+//   label: string;
+//   min: number;
+//   max: number;
+//   initial: number;
+//   position?: [[number, number], [number, number], [number, number]];
+// }
 
-interface FunctionConfig {
-  expression: string;
-  range: [number, number];
-  color?: string;
-}
-
-
-interface FunctionPlotsProps {
-  config: FunctionPlotsConfig;
-}
-
-interface ImplicitCurveConfig {
-  expression: string; // e.g., "x^2 + y^2 = 1"
-  range: [[number, number], [number, number]]; // [[xmin, xmax], [ymin, ymax]]
-  color?: string;
-}
-
-interface FunctionPlotsConfig {
-  sliders?: SliderConfig[];
-  functions?: FunctionConfig[];
-  implicitCurves?: ImplicitCurveConfig[]; // ✅ Add this
-}
+// interface FunctionConfig {
+//   expression: string;
+//   range: [number, number];
+//   color?: string;
+// }
 
 
-// 2D function plotting component
+// interface FunctionPlotsProps {
+//   config: FunctionPlotsConfig;
+// }
+
+// interface ImplicitCurveConfig {
+//   expression: string; // e.g., "x^2 + y^2 = 1"
+//   range: [[number, number], [number, number]]; // [[xmin, xmax], [ymin, ymax]]
+//   color?: string;
+// }
+
+// interface FunctionPlotsConfig {
+//   sliders?: SliderConfig[];
+//   functions?: FunctionConfig[];
+//   implicitCurves?: ImplicitCurveConfig[]; // ✅ Add this
+// }
+
+
+// // 2D function plotting component
+// // export default function FunctionPlots({ config }: FunctionPlotsProps) {
+// //   const boxRef = useRef<HTMLDivElement | null>(null);
+// //   const boardRef = useRef<JXG.Board | null>(null);
+
+// //   function sanitizeExpression(expr: string): string {
+// //     const mathFunctions = [
+// //       "sin", "cos", "tan", "asin", "acos", "atan",
+// //       "log", "log10", "exp", "sqrt", "abs", "pow", "min", "max", "floor", "ceil", "round"
+// //     ];
+
+// //     // Add constants like pi and e
+// //     expr = expr.replace(/\bpi\b/gi, "Math.PI");
+// //     expr = expr.replace(/\be\b/g, "Math.E");
+
+// //     for (const fn of mathFunctions) {
+// //       const pattern = new RegExp(`\\b${fn}\\b`, "g");
+// //       expr = expr.replace(pattern, `Math.${fn}`);
+// //     }
+
+// //     return expr;
+// //   }
+
+// //   useEffect(() => {
+// //     if (!boxRef.current || !config) return;
+// //     if (boardRef.current) JXG.JSXGraph.freeBoard(boardRef.current); // Clean up previous board
+
+// //     const brd = JXG.JSXGraph.initBoard(boxRef.current, {
+// //       boundingbox: [-6, 25, 6, -6],
+// //       axis: true,
+// //     });
+
+// //     boardRef.current = brd;
+
+// //     const sliders: { [key: string]: JXG.Slider } = {};
+
+// //     if (config.sliders) {
+// //       config.sliders.forEach((s) => {
+// //         sliders[s.label] = brd.create(
+// //           "slider",
+// //           s.position || [[-5, 5], [-3, 5], [s.min, s.initial, s.max]],
+// //           { name: s.label }
+// //         );
+// //       });
+// //     }
+
+// //     if (config.functions) {
+// //       config.functions.forEach((f) => {
+// //         const safeExpression = sanitizeExpression(f.expression);
+
+// //         brd.create(
+// //           "functiongraph",
+// //           [
+// //             (x: number): number => {
+// //               const argNames: string[] = ["x", ...Object.keys(sliders)];
+// //               const argValues: number[] = [x, ...Object.values(sliders).map((slider) => slider.Value())];
+
+// //               const fn: (...args: number[]) => number = new Function(
+// //                 ...argNames,
+// //                 `return ${safeExpression};`
+// //               ) as (...args: number[]) => number;
+
+// //               return fn(...argValues);
+// //             },
+// //             f.range[0],
+// //             f.range[1],
+// //           ],
+// //           { strokeColor: f.color || "blue", strokeWidth: 2 }
+// //         );
+// //       });
+// //     }
+
+
+// //     if (config.implicitCurves) {
+// //       config.implicitCurves.forEach((curve) => {
+// //         const expr = curve.expression.replace(/\^/g, "**"); // x^2 => x**2
+// //         const jsExpr = expr.replace(/=/, "-(") + ")"; // "x**2 + y**2 = 1" → "x**2 + y**2 - (1)"
+
+// //         const f = (x: number, y: number): number => {
+// //           try {
+// //             const evalExpr = jsExpr.replace(/x/g, `(${x})`).replace(/y/g, `(${y})`);
+// //             return eval(evalExpr);
+// //           } catch {
+// //             return NaN;
+// //           }
+// //         };
+
+// //         const points: [number, number][] = [];
+
+// //         const [xMin, xMax] = curve.range[0];
+// //         const [yMin, yMax] = curve.range[1];
+
+// //         for (let x = xMin; x <= xMax; x += 0.05) {
+// //           for (let y = yMin; y <= yMax; y += 0.05) {
+// //             if (Math.abs(f(x, y)) < 0.05) {
+// //               points.push([x, y]);
+// //             }
+// //           }
+// //         }
+
+// //         if (points.length > 0) {
+// //           brd.create("curve", [points.map(p => p[0]), points.map(p => p[1])], {
+// //             strokeColor: curve.color || "red",
+// //             strokeWidth: 2,
+// //           });
+// //         }
+// //       });
+// //     }
+// //   }, [config]);
+
+// //   return <div ref={boxRef} style={{ width: '100%', height: '100%' }} />;
+// // }
+
+
 // export default function FunctionPlots({ config }: FunctionPlotsProps) {
 //   const boxRef = useRef<HTMLDivElement | null>(null);
 //   const boardRef = useRef<JXG.Board | null>(null);
+//   const boxIdRef = useRef(`jxg-${Math.random().toString(36).slice(2)}`);
 
 //   function sanitizeExpression(expr: string): string {
+//     // convert caret to JS exponent
+//     expr = expr.replace(/\^/g, "**");
+
 //     const mathFunctions = [
 //       "sin", "cos", "tan", "asin", "acos", "atan",
 //       "log", "log10", "exp", "sqrt", "abs", "pow", "min", "max", "floor", "ceil", "round"
 //     ];
-
-//     // Add constants like pi and e
 //     expr = expr.replace(/\bpi\b/gi, "Math.PI");
 //     expr = expr.replace(/\be\b/g, "Math.E");
-
 //     for (const fn of mathFunctions) {
 //       const pattern = new RegExp(`\\b${fn}\\b`, "g");
 //       expr = expr.replace(pattern, `Math.${fn}`);
 //     }
-
 //     return expr;
 //   }
 
 //   useEffect(() => {
-//     if (!boxRef.current || !config) return;
-//     if (boardRef.current) JXG.JSXGraph.freeBoard(boardRef.current); // Clean up previous board
+//     if (!config) return;
 
-//     const brd = JXG.JSXGraph.initBoard(boxRef.current, {
+//     // free previous board
+//     if (boardRef.current) {
+//       try { JXG.JSXGraph.freeBoard(boardRef.current); } catch { }
+//       boardRef.current = null;
+//     }
+
+//     const brd = JXG.JSXGraph.initBoard(boxIdRef.current, {
 //       boundingbox: [-6, 25, 6, -6],
 //       axis: true,
+//       showNavigation: false,
+//       showCopyright: false,
 //     });
+
+//     // Make axis ticks and their labels white
+//     const tickStyle = { strokeColor: '#ffffff', label: { strokeColor: '#ffffff' } };
+//     const axes = (brd.defaultAxes as any) || {};
+//     const xAxis = axes.x;
+//     const yAxis = axes.y;
+
+//     if (xAxis?.defaultTicks && typeof xAxis.defaultTicks.setAttribute === "function") {
+//       xAxis.defaultTicks.setAttribute(tickStyle);
+//     }
+//     if (yAxis?.defaultTicks && typeof yAxis.defaultTicks.setAttribute === "function") {
+//       yAxis.defaultTicks.setAttribute(tickStyle);
+//     }
+
+//     // Optional: lighten axis lines
+//     if (xAxis && typeof xAxis.setAttribute === "function") {
+//       xAxis.setAttribute({ strokeColor: '#cbd5e1' });
+//     }
+//     if (yAxis && typeof yAxis.setAttribute === "function") {
+//       yAxis.setAttribute({ strokeColor: '#cbd5e1' });
+//     }
 
 //     boardRef.current = brd;
 
@@ -83,22 +224,17 @@ interface FunctionPlotsConfig {
 //       });
 //     }
 
+//     // Functions y = f(x)
 //     if (config.functions) {
 //       config.functions.forEach((f) => {
 //         const safeExpression = sanitizeExpression(f.expression);
-
 //         brd.create(
 //           "functiongraph",
 //           [
 //             (x: number): number => {
 //               const argNames: string[] = ["x", ...Object.keys(sliders)];
-//               const argValues: number[] = [x, ...Object.values(sliders).map((slider) => slider.Value())];
-
-//               const fn: (...args: number[]) => number = new Function(
-//                 ...argNames,
-//                 `return ${safeExpression};`
-//               ) as (...args: number[]) => number;
-
+//               const argValues: number[] = [x, ...Object.values(sliders).map((sl) => sl.Value())];
+//               const fn = new Function(...argNames, `return ${safeExpression};`) as (...args: number[]) => number;
 //               return fn(...argValues);
 //             },
 //             f.range[0],
@@ -109,15 +245,21 @@ interface FunctionPlotsConfig {
 //       });
 //     }
 
-
+//     // Implicit curves f(x,y)=0 and a=b → a-(b)=0
 //     if (config.implicitCurves) {
 //       config.implicitCurves.forEach((curve) => {
-//         const expr = curve.expression.replace(/\^/g, "**"); // x^2 => x**2
-//         const jsExpr = expr.replace(/=/, "-(") + ")"; // "x**2 + y**2 = 1" → "x**2 + y**2 - (1)"
+//         let expr = curve.expression.replace(/\s+/g, "").replace(/\^/g, "**");
+//         if (expr.includes("=")) {
+//           const [left, right] = expr.split("=");
+//           expr = `${left}-(${right})`;
+//         } else {
+//           expr = `${expr}- (0)`;
+//         }
 
 //         const f = (x: number, y: number): number => {
 //           try {
-//             const evalExpr = jsExpr.replace(/x/g, `(${x})`).replace(/y/g, `(${y})`);
+//             const evalExpr = expr.replace(/x/g, `(${x})`).replace(/y/g, `(${y})`);
+//             // eslint-disable-next-line no-eval
 //             return eval(evalExpr);
 //           } catch {
 //             return NaN;
@@ -125,179 +267,37 @@ interface FunctionPlotsConfig {
 //         };
 
 //         const points: [number, number][] = [];
-
 //         const [xMin, xMax] = curve.range[0];
 //         const [yMin, yMax] = curve.range[1];
 
 //         for (let x = xMin; x <= xMax; x += 0.05) {
 //           for (let y = yMin; y <= yMax; y += 0.05) {
-//             if (Math.abs(f(x, y)) < 0.05) {
-//               points.push([x, y]);
-//             }
+//             if (Math.abs(f(x, y)) < 0.05) points.push([x, y]);
 //           }
 //         }
 
 //         if (points.length > 0) {
-//           brd.create("curve", [points.map(p => p[0]), points.map(p => p[1])], {
+//           brd.create("curve", [points.map((p) => p[0]), points.map((p) => p[1])], {
 //             strokeColor: curve.color || "red",
 //             strokeWidth: 2,
 //           });
+//         } else {
+//           console.warn("No points for implicit curve:", curve.expression);
 //         }
 //       });
 //     }
+
+//     return () => {
+//       if (boardRef.current) {
+//         try { JXG.JSXGraph.freeBoard(boardRef.current); } catch { }
+//         boardRef.current = null;
+//       }
+//     };
 //   }, [config]);
 
-//   return <div ref={boxRef} style={{ width: '100%', height: '100%' }} />;
+//   // IMPORTANT: fixed height so the board is visible
+//   return <div id={boxIdRef.current} ref={boxRef} style={{ width: "100%", height: "100%" }} />;
 // }
-
-
-export default function FunctionPlots({ config }: FunctionPlotsProps) {
-  const boxRef = useRef<HTMLDivElement | null>(null);
-  const boardRef = useRef<JXG.Board | null>(null);
-  const boxIdRef = useRef(`jxg-${Math.random().toString(36).slice(2)}`);
-
-  function sanitizeExpression(expr: string): string {
-    // convert caret to JS exponent
-    expr = expr.replace(/\^/g, "**");
-
-    const mathFunctions = [
-      "sin", "cos", "tan", "asin", "acos", "atan",
-      "log", "log10", "exp", "sqrt", "abs", "pow", "min", "max", "floor", "ceil", "round"
-    ];
-    expr = expr.replace(/\bpi\b/gi, "Math.PI");
-    expr = expr.replace(/\be\b/g, "Math.E");
-    for (const fn of mathFunctions) {
-      const pattern = new RegExp(`\\b${fn}\\b`, "g");
-      expr = expr.replace(pattern, `Math.${fn}`);
-    }
-    return expr;
-  }
-
-  useEffect(() => {
-    if (!config) return;
-
-    // free previous board
-    if (boardRef.current) {
-      try { JXG.JSXGraph.freeBoard(boardRef.current); } catch { }
-      boardRef.current = null;
-    }
-
-    const brd = JXG.JSXGraph.initBoard(boxIdRef.current, {
-      boundingbox: [-6, 25, 6, -6],
-      axis: true,
-      showNavigation: false,
-      showCopyright: false,
-    });
-
-    // Make axis ticks and their labels white
-    const tickStyle = { strokeColor: '#ffffff', label: { strokeColor: '#ffffff' } };
-    const axes = (brd.defaultAxes as any) || {};
-    const xAxis = axes.x;
-    const yAxis = axes.y;
-
-    if (xAxis?.defaultTicks && typeof xAxis.defaultTicks.setAttribute === "function") {
-      xAxis.defaultTicks.setAttribute(tickStyle);
-    }
-    if (yAxis?.defaultTicks && typeof yAxis.defaultTicks.setAttribute === "function") {
-      yAxis.defaultTicks.setAttribute(tickStyle);
-    }
-
-    // Optional: lighten axis lines
-    if (xAxis && typeof xAxis.setAttribute === "function") {
-      xAxis.setAttribute({ strokeColor: '#cbd5e1' });
-    }
-    if (yAxis && typeof yAxis.setAttribute === "function") {
-      yAxis.setAttribute({ strokeColor: '#cbd5e1' });
-    }
-
-    boardRef.current = brd;
-
-    const sliders: { [key: string]: JXG.Slider } = {};
-
-    if (config.sliders) {
-      config.sliders.forEach((s) => {
-        sliders[s.label] = brd.create(
-          "slider",
-          s.position || [[-5, 5], [-3, 5], [s.min, s.initial, s.max]],
-          { name: s.label }
-        );
-      });
-    }
-
-    // Functions y = f(x)
-    if (config.functions) {
-      config.functions.forEach((f) => {
-        const safeExpression = sanitizeExpression(f.expression);
-        brd.create(
-          "functiongraph",
-          [
-            (x: number): number => {
-              const argNames: string[] = ["x", ...Object.keys(sliders)];
-              const argValues: number[] = [x, ...Object.values(sliders).map((sl) => sl.Value())];
-              const fn = new Function(...argNames, `return ${safeExpression};`) as (...args: number[]) => number;
-              return fn(...argValues);
-            },
-            f.range[0],
-            f.range[1],
-          ],
-          { strokeColor: f.color || "blue", strokeWidth: 2 }
-        );
-      });
-    }
-
-    // Implicit curves f(x,y)=0 and a=b → a-(b)=0
-    if (config.implicitCurves) {
-      config.implicitCurves.forEach((curve) => {
-        let expr = curve.expression.replace(/\s+/g, "").replace(/\^/g, "**");
-        if (expr.includes("=")) {
-          const [left, right] = expr.split("=");
-          expr = `${left}-(${right})`;
-        } else {
-          expr = `${expr}- (0)`;
-        }
-
-        const f = (x: number, y: number): number => {
-          try {
-            const evalExpr = expr.replace(/x/g, `(${x})`).replace(/y/g, `(${y})`);
-            // eslint-disable-next-line no-eval
-            return eval(evalExpr);
-          } catch {
-            return NaN;
-          }
-        };
-
-        const points: [number, number][] = [];
-        const [xMin, xMax] = curve.range[0];
-        const [yMin, yMax] = curve.range[1];
-
-        for (let x = xMin; x <= xMax; x += 0.05) {
-          for (let y = yMin; y <= yMax; y += 0.05) {
-            if (Math.abs(f(x, y)) < 0.05) points.push([x, y]);
-          }
-        }
-
-        if (points.length > 0) {
-          brd.create("curve", [points.map((p) => p[0]), points.map((p) => p[1])], {
-            strokeColor: curve.color || "red",
-            strokeWidth: 2,
-          });
-        } else {
-          console.warn("No points for implicit curve:", curve.expression);
-        }
-      });
-    }
-
-    return () => {
-      if (boardRef.current) {
-        try { JXG.JSXGraph.freeBoard(boardRef.current); } catch { }
-        boardRef.current = null;
-      }
-    };
-  }, [config]);
-
-  // IMPORTANT: fixed height so the board is visible
-  return <div id={boxIdRef.current} ref={boxRef} style={{ width: "100%", height: "100%" }} />;
-}
 
 
 // import { useEffect, useRef } from "react";

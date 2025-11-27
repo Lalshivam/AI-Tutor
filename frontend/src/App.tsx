@@ -1,7 +1,8 @@
 // frontend/src/App.tsx
 import { useState, useCallback, useEffect } from 'react';
-import FunctionPlots from './components/FunctionPlot';
-import GeometryBoard from './components/GeometryBoard';
+// import FunctionPlots from './components/FunctionPlot';
+// import GeometryBoard from './components/GeometryBoard';
+import PlotBoard from './components/PlotBoard';
 import Math3D from './components/Math3D';
 import MessageBubble from './components/MessageBubble';
 import VoiceInput from './components/VoiceInput';
@@ -9,7 +10,8 @@ import { postChat } from './api';
 import { BlockMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 
-type PlotType = '2D' | '3D' | 'Geometry';
+// type PlotType = '2D' | '3D' | 'Geometry';
+type PlotType = '2D' | '3D'; // merged Geometry into 2D
 
 export default function App() {
   const [input, setInput] = useState('');
@@ -35,33 +37,62 @@ export default function App() {
       const u = new SpeechSynthesisUtterance(text);
       u.lang = 'en-US';
       speechSynthesis.speak(u);
-    } catch {}
+    } catch { }
   };
+
+  // function renderPlot(config: any, messagePlotType: PlotType) {
+  //   if (!config) return null;
+  //   switch (messagePlotType) {
+  //     case '2D':
+  //       if (config.functions || config.implicitCurves) return <PlotBoard config={config} />;
+  //       break;
+  //     case 'Geometry':
+  //       if (config.points || config.circles || config.segments) return <PlotBoard config={config} />;
+  //       break;
+  //     case '3D':
+  //       if (config.surfaces || config.curves) return <Math3D config={config} />;
+  //       return (
+  //         <div className="text-white text-sm text-center">
+  //           ❌ Cannot plot 3D graph. Try rephrasing your question like:
+  //           <br />
+  //           <code>"Plot a 3D sphere with radius 5"</code>
+  //         </div>
+  //       );
+  //   }
+  //   return (
+  //     <div className="text-gray-400 text-sm text-center">
+  //       ⚠️ No data found for plot type: <strong>{messagePlotType}</strong>
+  //     </div>
+  //   );
+  // }
 
   function renderPlot(config: any, messagePlotType: PlotType) {
     if (!config) return null;
     switch (messagePlotType) {
-      case '2D':
-        if (config.functions || config.implicitCurves) return <FunctionPlots config={config} />;
-        break;
-      case 'Geometry':
-        if (config.points || config.circles || config.segments) return <GeometryBoard config={config} />;
-        break;
       case '3D':
         if (config.surfaces || config.curves) return <Math3D config={config} />;
         return (
           <div className="text-white text-sm text-center">
-            ❌ Cannot plot 3D graph. Try rephrasing your question like:
-            <br />
-            <code>"Plot a 3D sphere with radius 5"</code>
+            ❌ Cannot plot 3D graph. Try: <code>"Plot a 3D sphere with radius 5"</code>
+          </div>
+        );
+      case '2D':
+      default:
+        // Unified PlotBoard supports both functions/implicitCurves and geometry objects
+        // If config has none, show notice.
+        if (
+          config.functions || config.implicitCurves ||
+          config.points || config.segments || config.circles || config.angles ||
+          config.polygons || config.annotations
+        ) {
+          return <PlotBoard config={config} />;
+        }
+        return (
+          <div className="text-gray-400 text-sm text-center">
+            ⚠️ No data found for plot
           </div>
         );
     }
-    return (
-      <div className="text-gray-400 text-sm text-center">
-        ⚠️ No data found for plot type: <strong>{messagePlotType}</strong>
-      </div>
-    );
   }
 
   const handleSend = useCallback(async () => {
@@ -137,7 +168,7 @@ export default function App() {
             className="input-field-modern"
           />
 
-          <div className="plot-buttons">
+          {/* <div className="plot-buttons">
             <button 
             type="button" 
             title="Supports: functions, implicit curves, parametric 2D"
@@ -158,6 +189,25 @@ export default function App() {
             onClick={() => setPlotType('Geometry')} 
             className={`plot-button ${plotType === 'Geometry' ? 'active' : ''}`}>
               Geometry
+            </button>
+          </div> */}
+
+          <div className="plot-buttons">
+            <button
+              type="button"
+              title="2D functions, implicit curves, and geometry"
+              onClick={() => setPlotType('2D')}
+              className={`plot-button ${plotType === '2D' ? 'active' : ''}`}
+            >
+              2D
+            </button>
+            <button
+              type="button"
+              title="3D surfaces and curves"
+              onClick={() => setPlotType('3D')}
+              className={`plot-button ${plotType === '3D' ? 'active' : ''}`}
+            >
+              3D
             </button>
           </div>
 
