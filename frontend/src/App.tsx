@@ -6,12 +6,14 @@ import PlotBoard from './components/PlotBoard';
 import Math3D from './components/Math3D';
 import MessageBubble from './components/MessageBubble';
 import VoiceInput from './components/VoiceInput';
+import QuizComp from './components/QuizComp';
 import { postChat } from './api';
 import { BlockMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
+import './index.css';
 
 // type PlotType = '2D' | '3D' | 'Geometry';
-type PlotType = '2D' | '3D'; // merged Geometry into 2D
+type PlotType = '2D' | '3D' | 'quiz';
 
 export default function App() {
   const [input, setInput] = useState('');
@@ -69,6 +71,12 @@ export default function App() {
   function renderPlot(config: any, messagePlotType: PlotType) {
     if (!config) return null;
     switch (messagePlotType) {
+    case 'quiz':
+      if (config?.quizzes && Array.isArray(config.quizzes)) {
+        return <QuizComp quizzes={config.quizzes} />;
+      }
+      return <div className="text-gray-400 text-sm text-center">⚠️ Invalid quiz format</div>;
+
       case '3D':
         if (config.surfaces || config.curves) return <Math3D config={config} />;
         return (
@@ -101,6 +109,7 @@ export default function App() {
     setLoading(true);
     setMessages(prev => [...prev, { role: 'user', content: text }]);
     try {
+      console.log('Sending message with plotType:', plotType);  //logging
       const data = await postChat({ message: text, plotType });
       setMessages(prev => [...prev, { role: 'ai', ...data, plotType }]);
       if (data?.plaintext) speak(data.plaintext);
@@ -208,6 +217,14 @@ export default function App() {
               className={`plot-button ${plotType === '3D' ? 'active' : ''}`}
             >
               3D
+            </button>
+            <button
+              type="button"
+              title="Quiz questions with plots"
+              onClick={() => setPlotType('quiz')}
+              className={`plot-button ${plotType === 'quiz' ? 'active' : ''}`}
+            >
+              Quiz
             </button>
           </div>
 
