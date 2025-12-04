@@ -1952,15 +1952,6 @@ below are the 2d plot config rules to follow when generating plotConfig for each
     let config = null, markdown = text, plaintext = text;
 
     try {
-      // const obj = JSON.parse(text);
-      // config = obj.config ?? null;
-      // markdown = obj.explanation ?? text;
-
-      // // Here we handle the \n (newlines) in the explanation
-      // markdown = markdown.replace(/\\n/g, '<br />'); // Convert all \n to <br /> for HTML rendering
-
-      // // Optionally, if you need plaintext, we remove any LaTeX for a clean version
-      // plaintext = markdown.replace(/\$.*?\$/g, '').replace(/<br \/>/g, '\n'); // Clean up for plaintext (if required)
 
       const obj = JSON.parse(text);
 
@@ -1992,23 +1983,50 @@ below are the 2d plot config rules to follow when generating plotConfig for each
 
   } catch (error) {
     console.error('Error calling Gemini API:', error);
-    return {
-      config: {
-        surfaces: [
-          {
-            expression: "sin(0.5*x)*cos(0.5*y)",
-            xrange: [-10, 10],
-            yrange: [-10, 10],
-            steps: 80,
-            colorscale: "Rainbow",
-            opacity: 0.9,
-            wireframe: false
-          }
-        ]
-      },
-      markdown: 'I\'m sorry, I couldn\'t get an explanation at this time.',
-      plaintext: 'I\'m sorry, I couldn\'t get an explanation at this time.',
-    };
+    if (plotType == "2D") {
+      return {
+        config: {
+          "points": [
+            { "label": "P0", "coords": [0, 0] },
+            { "label": "P1", "coords": [2, 2] },
+            { "label": "P2", "coords": [4, -1] },
+            { "label": "P3", "coords": [6, 1] }
+          ],
+          "functions": [
+            { "expression": "0.5*x^2 - x", "range": [0, 2] },
+            { "expression": "-0.3*x^2 + 2.4*x - 2.4", "range": [2, 4] },
+            { "expression": "0.1*x^2 - 1.2*x + 3.6", "range": [4, 6] }
+          ]
+        },
+        markdown: 'I\'m sorry, I couldn\'t get an explanation at this time.',
+        plaintext: 'I\'m sorry, I couldn\'t get an explanation at this time.',
+      };
+    }
+    if (plotType == "3D") {
+      return {
+        config: {
+          surfaces: [
+            {
+              expression: "sin(0.5*x)*cos(0.5*y)",
+              xrange: [-10, 10],
+              yrange: [-10, 10],
+              steps: 80,
+              colorscale: "Rainbow",
+              opacity: 0.9,
+              wireframe: false
+            }
+          ]
+        },
+        markdown: 'I\'m sorry, I couldn\'t get an explanation at this time.',
+        plaintext: 'I\'m sorry, I couldn\'t get an explanation at this time.',
+      };
+    }
+    // Default fallback for 'quiz' or any other type
+  return {
+    config: null,
+    markdown: 'I\'m sorry, I couldn\'t get an explanation at this time.',
+    plaintext: 'I\'m sorry, I couldn\'t get an explanation at this time.',
+  };
   }
 }
 
