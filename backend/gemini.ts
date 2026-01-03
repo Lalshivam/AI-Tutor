@@ -1,10 +1,21 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { GoogleGenAI } from '@google/genai';
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
+const genAI = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
 console.log('GEMINI_API_KEY:', process.env.GEMINI_API_KEY);
 
+
+
+async function listModels() {
+  const models = await genAI.models.list();
+  for await (const model of models) {
+    console.log(`${model.name} - ${model.displayName}`);
+    console.log(`  Supported methods: ${model.supportedActions?.join(', ')}`);
+  }
+}
+
+// listModels();
+
 export async function explainWithGemini(message: string, mathResult: any, plotType: string) {
-  const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
 
   // Create a different prompt based on plotType (3D vs 2D)
   let prompt = `
@@ -1930,12 +1941,30 @@ below are the 2d plot config rules to follow when generating plotConfig for each
   Math steps: ${JSON.stringify(mathResult.latexSteps)}`;
 
   try {
-    const result = await model.generateContent(prompt);
-    const raw = result.response.text();
-    // console.log('prompt:', prompt);
+
+    console.log('Gemini prompt:', prompt);
+
+    // 4. Call Gemini API
+    // Use the modern SDK pattern: combine model, contents, and config in one call
+    const result = await genAI.models.generateContent({
+      model: "gemini-2.0-flash",
+      contents: prompt,
+      config: {
+        responseMimeType: "application/json",
+        temperature: 0.2,
+      }
+    });
+
+    const raw = result.text;
     console.log('Gemini raw response:', raw);
 
-    // Remove code fences and whitespace
+    // 5. Handle undefined response
+    if (!raw) {
+      console.error('Gemini returned empty response');
+      return getFallback(plotType);
+    }
+
+    // 6. Clean and Parse (Maintaining your existing cleaning logic)
     let text = raw.replace(/```json/g, "").replace(/```/g, "").trim();
 
     // After removing code fences and before JSON.parse:
@@ -1983,50 +2012,56 @@ below are the 2d plot config rules to follow when generating plotConfig for each
 
   } catch (error) {
     console.error('Error calling Gemini API:', error);
-    if (plotType == "2D") {
-      return {
-        config: {
-          "points": [
-            { "label": "P0", "coords": [0, 0] },
-            { "label": "P1", "coords": [2, 2] },
-            { "label": "P2", "coords": [4, -1] },
-            { "label": "P3", "coords": [6, 1] }
-          ],
-          "functions": [
-            { "expression": "0.5*x^2 - x", "range": [0, 2] },
-            { "expression": "-0.3*x^2 + 2.4*x - 2.4", "range": [2, 4] },
-            { "expression": "0.1*x^2 - 1.2*x + 3.6", "range": [4, 6] }
-          ]
-        },
-        markdown: 'I\'m sorry, I couldn\'t get an explanation at this time.',
-        plaintext: 'I\'m sorry, I couldn\'t get an explanation at this time.',
-      };
-    }
-    if (plotType == "3D") {
-      return {
-        config: {
-          surfaces: [
-            {
-              expression: "sin(0.5*x)*cos(0.5*y)",
-              xrange: [-10, 10],
-              yrange: [-10, 10],
-              steps: 80,
-              colorscale: "Rainbow",
-              opacity: 0.9,
-              wireframe: false
-            }
-          ]
-        },
-        markdown: 'I\'m sorry, I couldn\'t get an explanation at this time.',
-        plaintext: 'I\'m sorry, I couldn\'t get an explanation at this time.',
-      };
-    }
-    // Default fallback for 'quiz' or any other type
-  return {
-    config: null,
-    markdown: 'I\'m sorry, I couldn\'t get an explanation at this time.',
-    plaintext: 'I\'m sorry, I couldn\'t get an explanation at this time.',
-  };
+    return getFallback(plotType);
   }
 }
+
+// Helper for fallbacks to keep main function clean
+function getFallback(plotType: string) {
+  if (plotType === "2D") {
+    return {
+      config: {
+        points: [
+          { label: "P0", coords: [0, 0] },
+          { label: "P1", coords: [2, 2] },
+          { label: "P2", coords: [4, -1] },
+          { label: "P3", coords: [6, 1] }
+        ],
+        functions: [
+          { expression: "0.5*x^2 - x", range: [0, 2] },
+          { expression: "-0.3*x^2 + 2.4*x - 2.4", range: [2, 4] },
+          { expression: "0.1*x^2 - 1.2*x + 3.6", range: [4, 6] }
+        ]
+      },
+      markdown: "I'm sorry, I couldn't get an explanation at this time.",
+      plaintext: "I'm sorry, I couldn't get an explanation at this time."
+    };
+  }
+  if (plotType === "3D") {
+    return {
+      config: {
+        surfaces: [
+          {
+            expression: "sin(0.5*x)*cos(0.5*y)",
+            xrange: [-10, 10],
+            yrange: [-10, 10],
+            steps: 80,
+            colorscale: "Rainbow",
+            opacity: 0.9,
+            wireframe: false
+          }
+        ]
+      },
+      markdown: "I'm sorry, I couldn't get an explanation at this time.",
+      plaintext: "I'm sorry, I couldn't get an explanation at this time."
+    };
+  }
+  // Default fallback for 'quiz' or any other type
+  return {
+    config: null,
+    markdown: "I'm sorry, I couldn't get an explanation at this time.",
+    plaintext: "I'm sorry, I couldn't get an explanation at this time."
+  };
+}
+
 
