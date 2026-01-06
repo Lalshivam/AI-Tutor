@@ -4,7 +4,6 @@ import { create, all } from "mathjs";
 
 const math = create(all);
 
-// Helper: convert JS-style ** to mathjs ^ safely
 const preprocessExpression = (expr) => expr.replace(/\*\*/g, "^");
 
 export default function Math3D({ config }) {
@@ -106,18 +105,94 @@ export default function Math3D({ config }) {
       });
     });
 
-    return out;
+        // --- Isosurfaces ---
+    (config.isosurfaces || []).forEach((iso, idx) => {
+      const steps = Math.max(5, Math.min(80, iso.steps ?? 30));
+      const xrange = iso.xrange && iso.xrange.length === 2 ? iso.xrange : [-5, 5];
+      const yrange = iso.yrange && iso.yrange.length === 2 ? iso.yrange : [-5, 5];
+      const zrange = iso.zrange && iso.zrange.length === 2 ? iso.zrange : [-5, 5];
+      const isovalue = iso.isovalue ?? 0;
+      const colorscale = iso.colorscale || "Viridis";
+      const opacity = iso.opacity ?? 0.7;
+
+      // Create coordinate grids
+      const xs = Array.from({ length: steps }, (_, i) => xrange[0] + (i * (xrange[1] - xrange[0])) / (steps - 1));
+      const ys = Array.from({ length: steps }, (_, i) => yrange[0] + (i * (yrange[1] - yrange[0])) / (steps - 1));
+      const zs = Array.from({ length: steps }, (_, i) => zrange[0] + (i * (zrange[1] - zrange[0])) / (steps - 1));
+
+      let compiled;
+      try {
+        const expr = preprocessExpression(String(iso.expression).trim());
+        compiled = math.compile(expr);
+      } catch (err) {
+        console.error(`Isosurface compile error (index ${idx}):`, iso.expression, err.message);
+        return;
+      }
+
+      // Evaluate f(x, y, z)
+      const X = [], Y = [], Z = [], values = [];
+      xs.forEach((x) => {
+        ys.forEach((y) => {
+          zs.forEach((z) => {
+            X.push(x);
+            Y.push(y);
+            Z.push(z);
+            try {
+              const v = compiled.evaluate({ x, y, z });
+              values.push(typeof v === "number" && Number.isFinite(v) ? v : NaN);
+            } catch {
+              values.push(NaN);
+            }
+          });
+        });
+      });
+
+      out.push({
+        type: "isosurface",
+        x: X,
+        y: Y,
+        z: Z,
+        value: values,
+        isomin: isovalue,
+        isomax: isovalue,
+        surface: { show: true, count: 1 },
+        colorscale,
+        opacity,
+      });
+    });
+
+    const defaultLayout = {
+    autosize: true,
+    margin: { l: 0, r: 0, b: 0, t: 30, pad: 0 },
+    scene: {
+      aspectmode: "manual",
+      aspectratio: { x: 1, y: 1, z: 1 },
+      xaxis: { title: "x", range: [-6, 6], autorange: false },
+      yaxis: { title: "y", range: [-6, 6], autorange: false },
+      zaxis: { title: "z", range: [-6, 6], autorange: false },
+      },
+    };
+
+  // merge logic unchanged
+  const mergedLayout = {
+    ...defaultLayout,
+    ...(config.layout || {}),
+    scene: {
+      ...defaultLayout.scene,
+      ...(config.layout?.scene || {}),
+      xaxis: { ...defaultLayout.scene.xaxis, ...(config.layout?.scene?.xaxis || {}) },
+      yaxis: { ...defaultLayout.scene.yaxis, ...(config.layout?.scene?.yaxis || {}) },
+      zaxis: { ...defaultLayout.scene.zaxis, ...(config.layout?.scene?.zaxis || {}) },
+    },
+  };
+
+    return [out, mergedLayout];
   }, [config]);
 
   return (
     <Plot
-    data={data}
-    layout={{
-      ...config.layout,
-      autosize: true,
-      margin: { l: 0, r: 0, b: 0, t: 30, pad: 0 },
-      scene: { aspectmode: "cube" },
-    }}
+    data={data[0]}
+    layout={data[1]}
     style={{
       width: "300px",
       height: "300px",

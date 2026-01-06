@@ -27,6 +27,7 @@ export default function Animate({ config }) {
     const boardConfig = {
       boundingbox: config.boundingbox || [-3, 3, 3, -3],
       axis: config.showAxis !== false,
+      showNavigation: config.showNavigation || false,
       showCopyright: false,
       ...config.boardOptions
     };
@@ -38,7 +39,7 @@ export default function Animate({ config }) {
     const shapes = {};
     const points = {};
     const lines = {};
-
+    const tracePaths = config.tracePaths || {};
     // 1. Create shapes first
     config.shapes?.forEach((shape, i) => {
       let obj;
@@ -136,6 +137,39 @@ export default function Animate({ config }) {
             const speed = anim.speed || 50;
             const duration = anim.duration; // Optional: stop after duration
             
+            // For traced points, create a curve to draw the path
+            let traceCurve = null;
+            const pathPoints = [];
+            
+            if (tracePaths[name]) {
+              // Pre-calculate the path if duration is specified
+              if (duration) {
+                for (let preT = 0; preT <= duration; preT += step * 2) {
+                  try {
+                    const preX = xFn(preT, Math);
+                    const preY = yFn(preT, Math);
+                    if (isFinite(preX) && isFinite(preY)) {
+                      pathPoints.push([preX, preY]);
+                    }
+                  } catch (e) {}
+                }
+                
+                // Create a curve from the path
+                if (pathPoints.length > 1) {
+                  traceCurve = brd.create('curve', [
+                    pathPoints.map(p => p[0]),
+                    pathPoints.map(p => p[1])
+                  ], {
+                    strokeColor: tracePaths[name].options?.strokeColor || '#cc330066',
+                    strokeWidth: 2,
+                    highlight: false,
+                    fixed: true,
+                    ...tracePaths[name].options
+                  });
+                }
+              }
+            }
+            
             const timer = setInterval(() => {
               try {
                 const x = xFn(t, Math);
@@ -143,6 +177,29 @@ export default function Animate({ config }) {
                 
                 if (isFinite(x) && isFinite(y)) {
                   obj.moveTo([x, y], 100);
+                  
+                  // Update trace curve dynamically if no duration
+                  if (tracePaths[name] && !duration && pathPoints.length < 1000) {
+                    pathPoints.push([x, y]);
+                    if (pathPoints.length === 1 && !traceCurve) {
+                      // Create curve on first point
+                      traceCurve = brd.create('curve', [
+                        pathPoints.map(p => p[0]),
+                        pathPoints.map(p => p[1])
+                      ], {
+                        strokeColor: tracePaths[name].options?.strokeColor || '#cc330066',
+                        strokeWidth: 2,
+                        highlight: false,
+                        fixed: true,
+                        ...tracePaths[name].options
+                      });
+                    } else if (traceCurve) {
+                      // Update existing curve
+                      traceCurve.dataX = pathPoints.map(p => p[0]);
+                      traceCurve.dataY = pathPoints.map(p => p[1]);
+                      brd.update();
+                    }
+                  }
                 }
                 
                 t += step;
@@ -173,7 +230,11 @@ export default function Animate({ config }) {
     config.traces?.forEach((trace) => {
       const pt = points[trace.point];
       if (pt) {
-        pt.setAttribute({ trace: true, ...trace.options });
+        // Enable tracing with better default styling
+        pt.setAttribute({ 
+          trace: true,
+          ...trace.options
+        });
       }
     });
 

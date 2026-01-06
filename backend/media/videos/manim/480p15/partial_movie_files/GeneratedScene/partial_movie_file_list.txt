@@ -1,5 +1,0 @@
-# This file is used internally by FFMPEG.
-file 'file:C:/Users/Hp/OneDrive/Documents/AI_TUTOR/backend/media/videos/manim/480p15/partial_movie_files/GeneratedScene/1185818338_2193858992_223132457.mp4'
-file 'file:C:/Users/Hp/OneDrive/Documents/AI_TUTOR/backend/media/videos/manim/480p15/partial_movie_files/GeneratedScene/624642324_344086527_2998308720.mp4'
-file 'file:C:/Users/Hp/OneDrive/Documents/AI_TUTOR/backend/media/videos/manim/480p15/partial_movie_files/GeneratedScene/624642324_947802942_3745056490.mp4'
-file 'file:C:/Users/Hp/OneDrive/Documents/AI_TUTOR/backend/media/videos/manim/480p15/partial_movie_files/GeneratedScene/624642324_2844360058_72648748.mp4'

@@ -8,7 +8,7 @@ export default function GeometryBoard({ config }) {
 
   useEffect(() => {
     if (!boxRef.current || !config) return;
-
+    
     JXG.Options.axis.strokeColor = "white";
     JXG.Options.axis.ticks.strokeColor = "white";
     JXG.Options.axis.ticks.label.strokeColor = "white";
@@ -33,6 +33,34 @@ export default function GeometryBoard({ config }) {
     const circles = {};
     const lines = {};
 
+    function getShadingStrip(p1, p2, direction, thickness = 10) {
+      if (!p1 || !p2) {
+    console.error("getShadingStrip: missing endpoints:", { p1, p2 });
+    return null;
+    }
+      const dx = p2[0] - p1[0];
+      const dy = p2[1] - p1[1];
+
+      // Normal vector
+      let nx = dy;
+      let ny = -dx;
+
+      // Normalize
+      const len = Math.hypot(nx, ny);
+      nx = (nx / len) * direction;
+      ny = (ny / len) * direction;
+
+      // Near band (close to boundary)
+      const near1 = [p1[0] + nx * 0.2, p1[1] + ny * 0.2];
+      const near2 = [p2[0] + nx * 0.2, p2[1] + ny * 0.2];
+
+      // Far band (fade outward)
+      const far1 = [p1[0] + nx * thickness, p1[1] + ny * thickness];
+      const far2 = [p2[0] + nx * thickness, p2[1] + ny * thickness];
+
+      return [near1, near2, far2, far1];
+    }
+
     config.points?.forEach(p => {
       points[p.label] = brd.create("point", p.coords, { 
         name: p.label, 
@@ -44,7 +72,7 @@ export default function GeometryBoard({ config }) {
 
     // 2. create segments first and store for future reference
     // 2a. First pass: only segments whose endpoints already exist
-config.segments?.forEach(s => {
+  config.segments?.forEach(s => {
   const fromPoint = points[s.from];
   const toPoint = points[s.to];
 
@@ -94,7 +122,7 @@ config.derived?.forEach(d => {
         });
       }
       break;
-    }i
+    }
     case "perpendicular": {
       const pt = points[d.of[0]];
       const ln = lines[d.of[1]];
@@ -197,6 +225,7 @@ config.derived?.forEach(d => {
           strokeWidth: 2,
           dash: e.style === 'dashed' ? 2 : 0
         });
+        
       } else if (focus1 && focus2 && e.thirdPoint) {
         // Ellipse defined by two foci and a third point
         const thirdPt = points[e.thirdPoint];
@@ -241,19 +270,24 @@ config.derived?.forEach(d => {
 
     // 10. Create angles
     config.angles?.forEach(a => {
-      const pt1 = points[a.points[0]];
-      const vertex = points[a.points[1]];
-      const pt2 = points[a.points[2]];
-      
-      if (pt1 && vertex && pt2) {
-        brd.create("angle", [pt1, vertex, pt2], {
-          radius: a.radius || 0.5,
-          strokeColor: a.color || '#00cc66',
-          fillColor: a.fillColor || '#00cc66',
-          fillOpacity: 0.3,
-          name: a.label || ''
-        });
-      }
+      const vertex = brd.create("point", [0, 0], {visible: true});
+      const pt1 = brd.create("point", [5, 0], {visible: true});
+      const angleDeg = a.degree;
+      const angleRad = angleDeg * Math.PI / 180;
+      const radius = 5;
+      const pt2 = brd.create("point", [
+        vertex.X() + radius * Math.cos(angleRad),
+        vertex.Y() + radius * Math.sin(angleRad)
+      ], {visible: true});
+      brd.create("angle", [pt1, vertex, pt2], {
+        radius: a.radius || 1,
+        strokeColor: a.color || '#00cc66',
+        fillColor: a.fillColor || '#00cc66',
+        fillOpacity: 0.3,
+        name: a.label || ''
+      });
+      brd.create("segment", [vertex, pt1], {strokeColor: '#00cc66'});
+      brd.create("segment", [vertex, pt2], {strokeColor: '#00cc66'});
     });
 
     // 11. Create arcs
@@ -273,7 +307,8 @@ config.derived?.forEach(d => {
 
     // 12. Create function plots
     config.functions?.forEach(f => {
-      brd.create("functiongraph", [f.expression, f.xMin || -5, f.xMax || 5], {
+      let fn = eval(f.expression);
+      brd.create("functiongraph", [fn, f.xMin || -5, f.xMax || 5], {
         strokeColor: f.color || '#cc0099',
         strokeWidth: 2,
         dash: f.style === 'dashed' ? 2 : 0
@@ -325,4 +360,4 @@ config.derived?.forEach(d => {
       border: "2px solid #55e7ef", borderRadius: "16px", flex: "0 0 auto"}}
     />
   );
-}
+}  

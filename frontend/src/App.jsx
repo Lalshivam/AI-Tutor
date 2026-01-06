@@ -5,6 +5,8 @@ import { TbGeometry } from "react-icons/tb";
 import { CiSquarePlus } from "react-icons/ci";
 import { MdMenu } from "react-icons/md";
 import "./index.css";
+import LoginPopup from './components/LoginPopup';
+import RegisterPopup from './components/RegisterPopup';
 
 function App() {
   const[messages, setMessages] = useState([]);
@@ -14,6 +16,8 @@ function App() {
   const[feature, setfeature]  =useState(null);
   const [loading, SetLoading]  = useState(false);
   const[videoUrl, setVideoUrl] = useState(null);
+  const[auth, setAuth] = useState(null);
+  const [showRegister, setShowRegister] = useState(false);
   
   const FEATURES = [
   { label: "2D Visual", value: 1 },
@@ -22,7 +26,31 @@ function App() {
   { label: "Prepare Quiz", value: 4 },
   { label: "Video Generation", value:5}
   ];
+  // auth check 
 
+  useEffect(()=>{
+    const checkAuth = async ()=>{
+      try{
+        const res = await fetch("http://localhost:5000/auth/me", {
+          credentials: "include",
+        });
+        const data = await res.json();
+        if (res.ok) {
+          setAuth(true);
+          console.log(data.message);        // {id, email, name...}
+        } else {
+          setAuth(false);
+          console.log(false);           
+        }
+      } catch (err) {
+        setAuth(false);
+        console.log(err);
+      }
+    };
+    checkAuth();
+  },[]) 
+
+  //send function 
   const send = async() => {
   if (!input.trim()) return;
 
@@ -42,13 +70,14 @@ function App() {
   setInput("");
   const ans = await fetch("http://localhost:5000/api/chat", {
       method: "POST",
+      credentials: "include",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ InPrompt: inp, ftype:feature}),
     });
 
   let data;
   let videoObjectUrl;
-  if(feature===6){
+  if(feature===5){
     const blob = await ans.blob();
     videoObjectUrl = URL.createObjectURL(blob); // store in a variable
     setVideoUrl(videoObjectUrl);
@@ -59,10 +88,10 @@ function App() {
      setMessages((prev) => {
         const withoutLoading = prev.filter((m) => m.type !== "loading");
         let newMsgs = [];
-        if(feature===6){
+        if(feature===5){
           newMsgs.push({
             sender: "ai",
-            type: 6,
+            type: 5,
             graph: videoObjectUrl,
           });
         }
@@ -88,7 +117,9 @@ function App() {
       setInput("");
     }
   };
-
+  const handleLoginSuccess = () => {
+    setAuth(true);
+  };
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
@@ -97,9 +128,11 @@ function App() {
     <div className="chat-container">
     <header className="chat-header">
       <MdMenu className='menu'/>
-      <TbGeometry className="h-icon" /> 
+      <TbGeometry className="h-icon" 
+      onClick={() => console.log("Geometry clicked")}/> 
       <h1 className='name' >MathVision</h1>
-      <CiSquarePlus className='newchat'/>
+      <CiSquarePlus className='newchat'
+      onClick={() => window.location.reload()}/>
     </header>
     
     <div className="messages">
@@ -141,8 +174,18 @@ function App() {
       <FaArrowUp />
     </button>
     </div>
+    {!auth && (
+      <>
+      {showRegister
+        ? <RegisterPopup  onSwitchToLogin={() => setShowRegister(false)} />
+        : <LoginPopup
+            onLogin={handleLoginSuccess}
+            onSwitchToRegister={() => setShowRegister(true)}
+          />
+      }
+      </>
+    )}
   </div>
   );
 }
 export default App;
- 
