@@ -1,5 +1,5 @@
 // frontend/src/App.tsx
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useContext } from 'react';
 // import FunctionPlots from './components/FunctionPlot';
 // import GeometryBoard from './components/GeometryBoard';
 import PlotBoard from './components/PlotBoard';
@@ -7,7 +7,8 @@ import Math3D from './components/Math3D';
 import MessageBubble from './components/MessageBubble';
 import VoiceInput from './components/VoiceInput';
 import QuizComp from './components/QuizComp';
-import { postChat } from './api';
+import { postChat, API_BASE } from './api';
+import { AuthContext } from './context/AuthContext';
 import { BlockMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import './index.css';
@@ -21,6 +22,20 @@ export default function App() {
   const [plotType, setPlotType] = useState<PlotType>('2D');
   const [loading, setLoading] = useState(false);
   const [canUseVoice, setCanUseVoice] = useState(false);
+  const auth = useContext(AuthContext);
+
+  const handleLogout = async () => {
+    try {
+      await fetch(`${API_BASE}/v1/auth/logout`, {
+        method: 'POST',
+        credentials: 'include',
+      });
+    } catch (err) {
+      console.error('Logout error:', err);
+    }
+    localStorage.removeItem('token');
+    auth?.setAccessToken(null);
+  };
 
   useEffect(() => {
     const w = window as any;
@@ -127,8 +142,11 @@ export default function App() {
 
   return (
     <div>
-      <header>
+      <header className="app-header">
         <h1 style={{ fontSize: '2rem', fontWeight: 'bold', color: '#409adfff' }}>MATH_VIS</h1>
+        <button className="logout-btn" onClick={handleLogout}>
+          Logout
+        </button>
       </header>
 
       <main className="content-area">
@@ -177,29 +195,6 @@ export default function App() {
             className="input-field-modern"
           />
 
-          {/* <div className="plot-buttons">
-            <button 
-            type="button" 
-            title="Supports: functions, implicit curves, parametric 2D"
-            onClick={() => setPlotType('2D')} 
-            className={`plot-button ${plotType === '2D' ? 'active' : ''}`}>
-              2D
-            </button>
-            <button 
-            type="button"
-            title="Supports: surfaces, curves" 
-            onClick={() => setPlotType('3D')} 
-            className={`plot-button ${plotType === '3D' ? 'active' : ''}`}>
-              3D
-            </button>
-            <button 
-            type="button"
-            title="Supports: points, segments, circles, angles" 
-            onClick={() => setPlotType('Geometry')} 
-            className={`plot-button ${plotType === 'Geometry' ? 'active' : ''}`}>
-              Geometry
-            </button>
-          </div> */}
 
           <div className="plot-buttons">
             <button
@@ -231,7 +226,9 @@ export default function App() {
           <button type="submit" className="submit-button-modern" disabled={loading}>
             {loading ? 'Sending…' : 'Send'}
           </button>
+
         </form>
+        
       </main>
 
       <footer>AI Tutor MVP © 2025</footer>

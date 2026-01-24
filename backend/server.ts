@@ -3,7 +3,10 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import path from 'path';
 import fs from 'fs';
+import cookieParser from 'cookie-parser';
 import { fileURLToPath, pathToFileURL } from 'url';
+import { connectDB } from './db/mongo.js';
+import { register, login, refresh, logout } from './auth/auth.Controller.js';
 
 dotenv.config(); // load .env early
 
@@ -25,14 +28,29 @@ console.log('BOOT:', { NODE_ENV: process.env.NODE_ENV, isDev, __dirname, solveMa
 const { solveMath } = await import(solveMathUrl);
 const { explainWithGemini } = await import(geminiUrl);
 
+// Connect to MongoDB
+await connectDB();
+
 const app = express();
-app.use(cors());
+
+// CORS configuration
+app.use(cors({
+  origin: isDev ? 'http://localhost:5173' : true,
+  credentials: true
+}));
 app.use(express.json());
+app.use(cookieParser());
 
 // health / root
 app.get('/', (req, res) => {
   res.send('AI Tutor Backend is running');
 });
+
+// ========== AUTH ROUTES ==========
+app.post('/v1/auth/register', register);
+app.post('/v1/auth/login', login);
+app.post('/v1/auth/refresh', refresh);
+app.post('/v1/auth/logout', logout);
 
 // chat API
 app.post('/api/chat', async (req, res) => {
