@@ -1,6 +1,7 @@
 // frontend/src/App.tsx
 import { useState, useCallback, useEffect, useContext } from 'react';
 import { useNavigate } from "react-router-dom";
+import { AuthContext } from "./context/AuthContext";
 // import FunctionPlots from './components/FunctionPlot';
 // import GeometryBoard from './components/GeometryBoard';
 import PlotBoard from './components/PlotBoard';
@@ -8,8 +9,7 @@ import Math3D from './components/Math3D';
 import MessageBubble from './components/MessageBubble';
 import VoiceInput from './components/VoiceInput';
 import QuizComp from './components/QuizComp';
-import { postChat, API_BASE } from './api';
-import { AuthContext } from './context/AuthContext';
+import { postChat ,API_BASE} from './api';
 import { BlockMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 import './index.css';
@@ -23,22 +23,22 @@ export default function App() {
   const [plotType, setPlotType] = useState<PlotType>('2D');
   const [loading, setLoading] = useState(false);
   const [canUseVoice, setCanUseVoice] = useState(false);
+
+  // Hooks must be inside the component
   const auth = useContext(AuthContext);
   const navigate = useNavigate();
 
-  const handleLogout = async () => {
+  // Logout function inside the component, using optional chaining
+  const logout = useCallback(async () => {
     try {
-      await fetch(`${API_BASE}/v1/auth/logout`, {
-        method: 'POST',
-        credentials: 'include',
-      });
-    } catch (err) {
-      console.error('Logout error:', err);
+      await fetch(`${API_BASE}/v1/auth/logout`, { method: "POST", credentials: "include" });
+    } catch {
+      // Silent fail
     }
-    localStorage.removeItem('token');
+    localStorage.removeItem("token");
     auth?.setAccessToken(null);
     navigate("/login");
-  };
+  }, [auth, navigate]);
 
   useEffect(() => {
     const w = window as any;
@@ -60,6 +60,31 @@ export default function App() {
     } catch { }
   };
 
+  // function renderPlot(config: any, messagePlotType: PlotType) {
+  //   if (!config) return null;
+  //   switch (messagePlotType) {
+  //     case '2D':
+  //       if (config.functions || config.implicitCurves) return <PlotBoard config={config} />;
+  //       break;
+  //     case 'Geometry':
+  //       if (config.points || config.circles || config.segments) return <PlotBoard config={config} />;
+  //       break;
+  //     case '3D':
+  //       if (config.surfaces || config.curves) return <Math3D config={config} />;
+  //       return (
+  //         <div className="text-white text-sm text-center">
+  //           ❌ Cannot plot 3D graph. Try rephrasing your question like:
+  //           <br />
+  //           <code>"Plot a 3D sphere with radius 5"</code>
+  //         </div>
+  //       );
+  //   }
+  //   return (
+  //     <div className="text-gray-400 text-sm text-center">
+  //       ⚠️ No data found for plot type: <strong>{messagePlotType}</strong>
+  //     </div>
+  //   );
+  // }
 
   function renderPlot(config: any, messagePlotType: PlotType) {
     if (!config) return null;
@@ -122,9 +147,7 @@ export default function App() {
     <div>
       <header className="app-header">
         <h1 style={{ fontSize: '2rem', fontWeight: 'bold', color: '#409adfff' }}>MATH_VIS</h1>
-        <button className="logout-btn" onClick={handleLogout}>
-          Logout
-        </button>
+        <button className="logout-btn" onClick={logout}>Logout</button>
       </header>
 
       <main className="content-area">
@@ -173,6 +196,29 @@ export default function App() {
             className="input-field-modern"
           />
 
+          {/* <div className="plot-buttons">
+            <button 
+            type="button" 
+            title="Supports: functions, implicit curves, parametric 2D"
+            onClick={() => setPlotType('2D')} 
+            className={`plot-button ${plotType === '2D' ? 'active' : ''}`}>
+              2D
+            </button>
+            <button 
+            type="button"
+            title="Supports: surfaces, curves" 
+            onClick={() => setPlotType('3D')} 
+            className={`plot-button ${plotType === '3D' ? 'active' : ''}`}>
+              3D
+            </button>
+            <button 
+            type="button"
+            title="Supports: points, segments, circles, angles" 
+            onClick={() => setPlotType('Geometry')} 
+            className={`plot-button ${plotType === 'Geometry' ? 'active' : ''}`}>
+              Geometry
+            </button>
+          </div> */}
 
           <div className="plot-buttons">
             <button
@@ -204,9 +250,7 @@ export default function App() {
           <button type="submit" className="submit-button-modern" disabled={loading}>
             {loading ? 'Sending…' : 'Send'}
           </button>
-
         </form>
-        
       </main>
 
       <footer>AI Tutor MVP © 2025</footer>

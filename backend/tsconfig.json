@@ -1,9 +1,9 @@
 {
   "compilerOptions": {
     "outDir": "./dist",
-    "module": "nodenext",
-    "moduleResolution": "nodenext", // REQUIRED with "module": "nodenext"
-    "target": "esnext",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext", // REQUIRED with "module": "nodenext"
+    "target": "ES2020",
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "sourceMap": true,
@@ -18,7 +18,8 @@
     // ✅ Required for React frontend code (safe to leave in)
     "jsx": "react-jsx"
   },
-  "include": ["*.ts"]
+  "include": ["*.ts"],
+  "exclude": ["node_modules"]
 }
 
 
