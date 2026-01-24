@@ -1947,7 +1947,7 @@ below are the 2d plot config rules to follow when generating plotConfig for each
     // 4. Call Gemini API
     // Use the modern SDK pattern: combine model, contents, and config in one call
     const result = await genAI.models.generateContent({
-      model: "gemini-2.0-flash",
+      model: "gemini-3-flash-preview",
       contents: prompt,
       config: {
         responseMimeType: "application/json",
